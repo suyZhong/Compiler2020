@@ -8,6 +8,7 @@ set(CMAKE_C_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
 set(CMAKE_C_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
 
 find_package(FLEX REQUIRED)
+find_package(BISON REQUIRED)
 
 INCLUDE_DIRECTORIES(
 include
@@ -21,6 +22,9 @@ include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_BINARY_DIR})
 
 add_subdirectory(src/lexer)
+add_subdirectory(src/common)
+add_subdirectory(src/parser)
 add_subdirectory(tests/lab1)
+add_subdirectory(tests/lab2)
 
 
