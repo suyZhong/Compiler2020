@@ -1,0 +1,486 @@
+# Lab2 实验文档
+
+## 0. 基础知识
+
+本次实验需要在实验 1 已完成的 `flex` 词法分析器的基础上，进一步使用 `bison` 完成语法分析器。为此，我们在这里简单介绍如何让 `bison` 和 `flex` 协同工作及其原理，并简单介绍 `bison` 的一些基础知识。
+
+### 0.1 Cminus-f 语法
+
+Cminus 语言的语法请参考《编译原理与实践》第九章附录，本节仅简要概括 Cminus-f 的语法。
+
+我们将 Cminus-f 的所有规则分为五类。
+
+1. 字面量、关键字、运算符与标识符
+   - `id`
+   - `type-specifier`
+   - `relop`
+   - `addop`
+   - `mulop`
+2. 声明
+   - `declaration-list`
+   - `declaration`
+   - `var-declaration`
+   - `fun-declaration`
+   - `local-declarations`
+3. 语句
+   - `compound-stmt`
+   - `statement-list`
+   - `statement`
+   - `expression-stmt`
+   - `iteration-stmt`
+   - `selection-stmt`
+   - `return-stmt`
+4. 表达式
+   - `expression`
+   - `var`
+   - `additive-expression`
+   - `term`
+   - `factor`
+   - `call`
+5. 其他
+   - `params`
+   - `param-list`
+   - `param`
+   - `args`
+   - `arg-list`
+
+起始符号是 `program`。
+
+**请注意，我们在 Cminus-f 中增加了 `float` 类型，所以请务必对文法的相应部分作出修改。**（Hint: 修改很少。）
+
+### 0.2 Bison 简介
+
+Bison 是一款解析器生成器（parser generator），它可以将 LALR 文法转换成可编译的 C 代码，从而大大减轻程序员手动设计解析器的负担。Bison 是 GNU 对早期 Unix 的 Yacc 工具的一个重新实现，所以文件扩展名为 `.y`。（Yacc 的意思是 Yet Another Compiler Compiler。）
+
+每个 Bison 文件由 `%%` 分成三部分。
+
+```c
+%{
+#include <stdio.h>
+/* 这里是序曲 */
+/* 这部分代码会被原样拷贝到生成的 .c 文件的开头 */
+int yylex(void);
+void yyerror(const char *s);
+%}
+
+/* 这些地方可以输入一些 bison 指令 */
+/* 比如用 %start 指令指定起始符号，用 %token 定义一个 token */
+%start reimu
+%token REIMU
+
+%%
+/* 从这里开始，下面是解析规则 */
+reimu : marisa { /* 这里写与该规则对应的处理代码 */ puts("rule1"); }
+      | REIMU  { /* 这里写与该规则对应的处理代码 */ puts("rule2") }
+      ; /* 规则最后不要忘了用分号结束哦～ */
+      
+/* 这种写法表示 ε —— 空输入 */
+marisa : { puts("Hello!"); }
+
+%%
+/* 这里是尾声 */
+/* 这部分代码会被原样拷贝到生成的 .c 文件的末尾 */
+
+int yylex(void)
+{
+    int c = getchar(); // 从 stdin 获取下一个字符 
+    switch (c) {
+    case EOF: return YYEOF;
+    case 'R': return REIMU;
+    default:  return 0;     // 返回无效 token 值，迫使 bison 报错
+    }
+}
+
+void yyerror(const char *s)
+{
+    fprintf(stderr, "%s\n", s);
+}
+
+int main(void)
+{
+    yyparse(); // 启动解析
+    return 0;
+}
+```
+
+另外有一些值得注意的点：
+1. Bison 传统上将 token 用大写单词表示，将 symbol 用小写字母表示。
+2. Bison 能且只能生成解析器源代码（一个 `.c` 文件），并且入口是 `yyparse`，所以为了让程序能跑起来，你需要手动提供 `main` 函数（但不一定要在 `.y` 文件中——你懂“链接”是什么，对吧？）。
+3. Bison 不能检测你的 action code 是否正确——它只能检测文法的部分错误，其他代码都是原样粘贴到 `.c` 文件中。
+4. Bison 需要你提供一个 `yylex` 来获取下一个 token。
+5. Bison 需要你提供一个 `yyerror` 来提供合适的报错机制。
+
+
+顺便提一嘴，上面这个 `.y` 是可以工作的——尽管它只能接受两个字符串。把上面这段代码保存为 `reimu.y`，执行如下命令来构建这个程序：
+
+```shell
+$ bison reimu.y
+$ gcc reimu.tab.c
+$ ./a.out
+R<-- 不要回车在这里按 Ctrl-D
+rule2
+$ ./a.out
+<-- 不要回车在这里按 Ctrl-D
+Hello!
+rule1
+$ ./a.out
+blablabla <-- 回车或者 Ctrl-D
+Hello!
+rule1     <-- 匹配到了 rule1
+syntax error <-- 发现了错误
+```
+
+于是我们验证了上述代码的确识别了该文法定义的语言 `{ "", "R" }`。
+
+### 0.3 Bison 和 Flex 的关系
+
+聪明的你应该发现了，我们这里手写了一个 `yylex` 函数作为词法分析器。而 lab1 我们正好使用 flex 自动生成了一个词法分析器。如何让这两者协同工作呢？特别是，我们需要在这两者之间共享 token 定义和一些数据，难道要手动维护吗？哈哈，当然不用！下面我们用一个四则运算计算器来简单介绍如何让 bison 和 flex 协同工作——重点是如何维护解析器状态、`YYSTYPE` 和头文件的生成。
+
+首先，我们必须明白，整个工作流程中，bison 是占据主导地位的，而 flex 仅仅是一个辅助工具，仅用来生成 `yylex` 函数。因此，最好先写 `.y` 文件。
+
+```c
+/* calc.y */
+/* calc.y */
+%{
+#include <stdio.h>
+    int yylex(void);
+    void yyerror(const char *s);
+%}
+
+%token RET
+%token <num> NUMBER
+%token <op> ADDOP MULOP LPAREN RPAREN
+%type <num> top line expr term factor
+
+%start top
+
+%union {
+    char   op;
+    double num;
+}
+
+%%
+
+top
+: top line {}
+| {}
+
+line
+: expr RET
+{
+    printf(" = %f\n", $1);
+}
+
+expr 
+: term
+{
+    $$ = $1;
+}
+| expr ADDOP term
+{
+    switch ($2) {
+    case '+': $$ = $1 + $3; break;
+    case '-': $$ = $1 - $3; break;
+    }
+}
+
+term
+: factor
+{
+    $$ = $1;
+}
+| term MULOP factor
+{
+    switch ($2) {
+    case '*': $$ = $1 * $3; break;
+    case '/': $$ = $1 / $3; break; // 想想看，这里会出什么问题？
+    }
+}
+
+factor
+: LPAREN expr RPAREN
+{
+    $$ = $2;
+}
+| NUMBER
+{
+    $$ = $1;
+}
+
+%%
+
+void yyerror(const char *s)
+{
+    fprintf(stderr, "%s\n", s);
+}
+```
+
+```c
+/*calc.l */
+%option noyywrap
+
+%{
+/* 引入 calc.y 定义的 token */
+#include "calc.tab.h"
+%}
+
+%%
+
+\( { return LPAREN; }
+\) { return RPAREN; }
+"+"|"-" { yylval.op = yytext[0]; return ADDOP; }
+"*"|"/" { yylval.op = yytext[0]; return MULOP; }
+[0-9]+|[0-9]+\.[0-9]*|[0-9]*\.[0-9]+ { yylval.num = atof(yytext); return NUMBER; }
+" "|\t {  }
+\r\n|\n|\r { return RET; }
+<<EOF>> { return EOF; }
+
+%%
+```
+
+最后，我们补充一个 `driver.c` 来提供 `main` 函数。
+
+```c
+int yyparse();
+
+int main()
+{
+    yyparse();
+    return 0;
+}
+```
+
+使用如下命令构建并测试程序：
+
+```shell
+$ bison -d calc.y 
+   (生成 calc.tab.c 和 calc.tab.h。如果不给出 -d 参数，则不会生成 .h 文件。)
+$ flex calc.l
+   (生成 lex.yy.c)
+$ gcc lex.yy.c calc.tab.c driver.c -o calc
+$ ./calc
+1+1
+ = 1.000000
+2*(1+1)
+ = 4.000000
+2*1+1
+ = 3.000000
+```
+
+如果你复制粘贴了上述程序，可能会觉得很神奇，并且有些地方看不懂。下面就详细讲解上面新出现的各种构造。
+
+* `YYSTYPE`: 在 bison 解析过程中，每个 symbol 最终都对应到一个值上。或者说，在 parse tree 上，每个节点都对应一个值，这个值的类型是 `YYSTYPE`。`YYSTYPE` 的具体内容是由 `%union` 构造指出的。上面的例子中，
+
+  ```c
+  %union {
+    char   op;
+    double num;
+  }
+  ```
+  
+  会生成类似这样的代码
+  
+  ```c
+  typedef union YYSTYPE {
+    char op;
+    double num;
+  } YYSTYPE;
+  ```
+  
+  为什么使用 `union` 呢？因为不同节点可能需要不同类型的值。比如，上面的例子中，我们希望 `ADDOP` 的值是 `char` 类型，而 `NUMBER` 应该是 `double` 类型的。
+
+* `$$` 和 `$1`, `$2`, `$3`, ...：现在我们来看如何从已有的值推出当前节点归约后应有的值。以加法为例：
+
+  ```c
+  term : term ADDOP factor
+       {
+          switch $2 {
+          case '+': $$ = $1 + $3; break;
+          case '-': $$ = $1 - $3; break;
+          }
+       }
+  ```
+  
+  其实很好理解。当前节点使用 `$$` 代表，而已解析的节点则是从左到右依次编号，称作 `$1`, `$2`, `$3`...
+  
+* `%type <>` 和 `%token <>`：注意，我们上面可没有写 `$1.num` 或者 `$2.op` 哦！那么 bison 是怎么知道应该用 `union` 的哪部分值的呢？其秘诀就在文件一开始的 `%type` 和 `%token` 上。
+
+  例如，`term` 应该使用 `num` 部分，那么我们就写
+  
+  ```c
+  %type <num> term
+  ```
+  
+  这样，以后用 `$` 去取某个值的时候，bison 就能自动生成类似 `stack[i].num` 这样的代码了。
+  
+  `%token <op> ADDOP` 与之类似，但有一个副作用是顺便将 `ADDOP` 传递给 `%token`，这样一行代码相当于两行代码，岂不是很赚。
+
+* `%token`：当我们用 `%token` 声明一个 token 时，这个 token 就可以在 C 代码中直接使用（注意 token 名千万不要和别的东西冲突！），也会导出到 `.h` 中，可以给 flex 用。
+
+* `yylval`：这时候我们可以打开 `.h` 文件，看看里面有什么。除了 token 定义，最末尾还有一个 `extern YYSTYPE yylval;` 。这个变量我们上面已经使用了，通过这个变量，我们就可以在 lexer **里面**设置某个 token 的值。
+
+呼……说了这么多，现在回头看看上面的代码，应该可以完全看懂了吧！这时候你可能才意识到为什么 flex 生成的分析器入口是 `yylex`，因为这个函数就是 bison 专门让程序员自己填的，作为一种扩展机制。另外，bison（或者说 yacc）生成的变量和函数名通常都带有 `yy` 前缀，希望在这里说还不太晚……
+
+最后还得提一下，尽管上面所讲已经足够应付很大一部分解析需求了，但是 bison 还有一些高级功能，比如自动处理运算符的优先级和结合性（于是我们就不需要手动把 `expr` 拆成 `factor`, `term` 了）。这部分功能，就留给同学们自己去探索吧！
+
+## 1. 实验要求
+
+本次实验需要各位同学首先将自己的 lab1 的词法部分复制到 `/src/parser` 目录的 [lexical\_analyzer.l](./src/parser/lexical\_analyzer.l)，然后根据 `cminux-f` 的语法补全 [syntax\_analyer.y](./src/parser/syntax_analyzer.y) 文件并合理修改 [lexical\_analyzer.l](./src/parser/lexical\_analyzer.l) 的相应部分，完成语法分析器，要求最终能够输出解析树。如：
+
+输入：
+
+```c
+int bar;
+float foo(void) { return 1.0; }
+```
+
+则 `parser` 将输出如下解析树：
+
+```
+>--+ program
+|  >--+ declaration-list
+|  |  >--+ declaration-list
+|  |  |  >--+ declaration
+|  |  |  |  >--+ var-declaration
+|  |  |  |  |  >--+ type-specifier
+|  |  |  |  |  |  >--* int
+|  |  |  |  |  >--* bar
+|  |  |  |  |  >--* ;
+|  |  >--+ declaration
+|  |  |  >--+ fun-declaration
+|  |  |  |  >--+ type-specifier
+|  |  |  |  |  >--* float
+|  |  |  |  >--* foo
+|  |  |  |  >--* (
+|  |  |  |  >--+ params
+|  |  |  |  |  >--* void
+|  |  |  |  >--* )
+|  |  |  |  >--+ compound-stmt
+|  |  |  |  |  >--* {
+|  |  |  |  |  >--+ local-declarations
+|  |  |  |  |  |  >--* epsilon
+|  |  |  |  |  >--+ statement-list
+|  |  |  |  |  |  >--+ statement-list
+|  |  |  |  |  |  |  >--* epsilon
+|  |  |  |  |  |  >--+ statement
+|  |  |  |  |  |  |  >--+ return-stmt
+|  |  |  |  |  |  |  |  >--* return
+|  |  |  |  |  |  |  |  >--+ expression
+|  |  |  |  |  |  |  |  |  >--+ simple-expression
+|  |  |  |  |  |  |  |  |  |  >--+ additive-expression
+|  |  |  |  |  |  |  |  |  |  |  >--+ term
+|  |  |  |  |  |  |  |  |  |  |  |  >--+ factor
+|  |  |  |  |  |  |  |  |  |  |  |  |  >--* 1.0
+|  |  |  |  |  |  |  |  >--* ;
+|  |  |  |  |  >--* }
+```
+
+请注意，上述解析树含有每个解析规则的所有子成分，包括诸如 `;` `{` `}` 这样的符号，请在编写规则时务必不要忘了它们。
+
+### 1.1 目录结构
+
+[TODO]
+
+### 1.2 编译、运行和验证
+
+* 编译
+
+  与 lab1 相同。若编译成功，则将在 `${WORKSPACE}/build/` 下生成 `parser` 命令。
+  
+* 运行
+
+  与 `lexer` 命令不同，本次实验的 `parser` 命令使用 shell 的输入重定向功能，即程序本身使用标准输入输出（stdin 和 stdout），但在 shell 运行命令时可以使用 `<` `>` 和 `>>` 灵活地自定义输出和输入从哪里来。
+
+  ```shell
+  $ cd 2020fall-Compiler_CMinus
+  $ ./build/parser               # 交互式使用（不进行输入重定向）
+  <在这里输入 Cminus-f 代码，如果遇到了错误，将程序将报错并退出。>
+  <输入完成后按 ^D 结束输入，此时程序将输出解析树。>
+  $ ./build/parser < test.cminus # 重定向标准输入
+  <此时程序从 test.cminus 文件中读取输入，因此不需要输入任何内容。>
+  <如果遇到了错误，将程序将报错并退出；否则，将输出解析树。>
+  $ ./build/parser < test.cminus > out
+  <此时程序从 test.cminus 文件中读取输入，因此不需要输入任何内容。>
+  <如果遇到了错误，将程序将报错并退出；否则，将输出解析树刀 out 文件中。>
+  ```
+  
+  通过灵活使用重定向，可以比较方便地完成各种各样的需求，请同学们务必掌握这个 shell 功能。
+  
+  此外，提供了 shell 脚本 `/tests/lab2/test_syntax.sh` 调用 `parser` 批量分析测试文件。
+  
+  ```shell
+  # test_syntax.sh 脚本将自动分析 ./tests/lab2/testcase 下所有文件后缀为 .cminus 的文件，并将输出结果保存在 ./tests/lab2/syntree 文件夹下
+  $ ./tests/lab2/test_syntax.sh
+    ...
+    ...
+    ...
+  $ ls ./tests/lab2/syntree
+    <成功分析的文件>
+  ```
+
+* 验证
+
+  我们使用 `diff` 命令进行验证。将自己的生成结果和助教提供的 `TA_syntree` 进行比较。
+  
+  ```shell
+  $ diff ./tests/lab2/syntree ./tests/lab2/TA_syntree
+  # 如果结果完全正确，则没有任何输出结果
+  # 如果有不一致，则会汇报具体哪个文件哪部分不一致
+  ```
+  
+  **请注意助教提供的`testcase`并不能涵盖全部的测试情况，完成此部分仅能拿到基础分，请自行设计自己的`testcase`进行测试。**
+  
+### 1.3 提交要求和评分标准
+
+* 提交要求
+
+  本实验的提交要求分为两部分：实验部分的文件和报告，git提交的规范性。
+  
+  * 实验部分:
+
+    * 需要完善 `./src/lab2/syntax_analyer.y` 文件;
+    * 需要在 `./Report/lab2/report.md` 撰写实验报告。
+    
+      * 实验报告内容包括:
+        * 实验要求、实验难点、实验设计、实验结果验证、实验反馈(具体参考[report.md](./Reports/lab1/report.md));
+        * 实验报告不参与评分标准，但是必须完成并提交.
+
+
+  * git提交规范：
+
+    * 不破坏目录结构;
+    * 不上传临时文件(凡是自动生成的文件和临时文件请不要上传);
+    * git log言之有物(不强制, 请不要git commit -m 'commit 1', git commit -m 'sdfsdf'，每次commit请提交有用的comment信息)
+  
+* 评分标准 [TODO]
+
+  * git提交规范(20分);
+  * 实现语法分析器并通过给出的基本测试样例(一个10分，共60分);
+  * 提交后通过助教进阶的多个测试用例(20分)。
+
+
+* 迟交规定
+
+  * `Soft Deadline` : [TODO]
+  * `Hard Deadline` : [TODO]
+  * 补交请邮件提醒TA：
+  
+    * 邮箱：[TODO]
+    * 邮件主题：lab2迟交-学号
+    * 内容：包括迟交原因、最后版本commitID、迟交时间等
+
+  * 迟交分数
+    * x为迟交天数(对于`Soft Deadline`而言)，grade满分10 
+
+      ```
+      final_grade = grade, x = 0
+      final_grade = grade * (0.9)^x, 0 < x <= 7
+      final_grade = 0, x > 7
+      ```
+
+* 关于抄袭和雷同
+
+  经过助教和老师判定属于作业抄袭或雷同情况，所有参与方一律零分，不接受任何解释和反驳。
+
+        
+如有任何问题，欢迎提issue进行批判指正。
