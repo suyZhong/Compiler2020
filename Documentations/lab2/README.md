@@ -140,7 +140,6 @@ syntax error <-- 发现了错误
 
 ```c
 /* calc.y */
-/* calc.y */
 %{
 #include <stdio.h>
     int yylex(void);
@@ -216,7 +215,7 @@ void yyerror(const char *s)
 ```
 
 ```c
-/*calc.l */
+/* calc.l */
 %option noyywrap
 
 %{
@@ -233,7 +232,6 @@ void yyerror(const char *s)
 [0-9]+|[0-9]+\.[0-9]*|[0-9]*\.[0-9]+ { yylval.num = atof(yytext); return NUMBER; }
 " "|\t {  }
 \r\n|\n|\r { return RET; }
-<<EOF>> { return EOF; }
 
 %%
 ```
