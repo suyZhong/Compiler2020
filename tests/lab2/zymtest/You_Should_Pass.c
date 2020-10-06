@@ -7,14 +7,14 @@ float GVAR;
 void NeverEverDeclareLikeThis;
 int GARRAY[2333];
 
-void MyFunc1(int floatNum, float intNum, void voidNums[]){
+void MyFuncA(int floatNum, float intNum, void voidNums[]){
     int IKnowYouAreVoid;
-    return MyFunc2(IKnowYouAreVoid);
+    return MyFuncB(IKnowYouAreVoid);
 }
 
-float MyFunc2(void){
+float MyFuncB(void){
     int IAmVoid[0];
-    return MyFunc1(.0, 0, IAmVoid);
+    return MyFuncA(.0, 0, IAmVoid);
 }
 
 int main(void){
@@ -24,8 +24,8 @@ int main(void){
     a = b = c = (85 == 84 + 0.4);
 
     if(a = b){
-        GARRAY[ ( MyFunc2() ) ] = GARRAY[c = 1.*.1 == 1.1];
-    }else if (MyFunc3(NotDeclared)){
+        GARRAY[ ( MyFuncB() ) ] = GARRAY[c = 1.*.1 == 1.1];
+    }else if (MyFuncC(NotDeclared)){
 
     }else;
 

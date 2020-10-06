@@ -1,6 +1,6 @@
 /*Basic array part*/
 
-void MyFunc1(int func_nums[]){
+void MyFuncA(int func_nums[]){
     int i; int j;
     i = 0;
     while(i < 10){
@@ -16,7 +16,7 @@ void MyFunc1(int func_nums[]){
 int main(void){
     int nums[100];
 
-    MyFunc1(nums);
+    MyFuncA(nums);
 
     return 0;
 }
