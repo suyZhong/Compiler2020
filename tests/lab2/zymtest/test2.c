@@ -11,7 +11,7 @@ float MyFunc1(int a, float x){
 int main(void){
     float result;
 
-    result = Myfunc1(5, 1.) + MyFunc1(-5, MyFunc1(0, .1));
+    result = Myfunc1(5, 1.) + MyFunc1(0, MyFunc1(0, .1));
 
     return 0;
 }
