@@ -2,7 +2,7 @@
 
 ## 0. 快速上手指南
 
-本次实验需要在 Lab 1 已完成的 `flex` 词法分析器的基础上，进一步使用 `bison` 完成语法分析器。
+本次实验需要在 Lab1 已完成的 `flex` 词法分析器的基础上，进一步使用 `bison` 完成语法分析器。
 
 ### 主要工作
 
@@ -436,14 +436,14 @@ float foo(void) { return 1.0; }
 ├── include <- 实验所需的头文件
 │   ├── lexical_analyzer.h
 │   └── SyntaxTree.h
-├── src <- 源代码
+├── src  <- 源代码
 │   ├── common
-│   │   └── SyntaxTree.c
+│   │   └── SyntaxTree.c  <- 分析树相关代码
 │   ├── lexer
 │   └── parser
 │       ├── lexical_analyzer.l  <- lab1 的词法部分复制到这，并进行一定改写
 │       └── syntax_analyzer.y  <- lab2 需要完善的文件
-└── tests	<- 测试文件
+└── tests	 <- 测试文件
     ├── lab1
     └── lab2
 ```
