@@ -421,7 +421,32 @@ float foo(void) { return 1.0; }
 
 ### 2.1 目录结构
 
-[TODO]
+```shell
+.
+├── CMakeLists.txt
+├── Documentations
+│   ├── lab1
+│   └── lab2
+│       └── README.md  <- lab2实验文档说明
+├── READMD.md
+├── Reports
+│   ├── lab1
+│   └── lab2
+│       └── report.md  <- lab2所需提交的实验报告（你需要在此提交实验报告）
+├── include <- 实验所需的头文件
+│   ├── lexical_analyzer.h
+│   └── SyntaxTree.h
+├── src <- 源代码
+│   ├── common
+│   │   └── SyntaxTree.c
+│   ├── lexer
+│   └── parser
+│       ├── lexical_analyzer.l  <- lab1 的词法部分复制到这，并进行一定改写
+│       └── syntax_analyzer.y  <- lab2 需要完善的文件
+└── tests	<- 测试文件
+    ├── lab1
+    └── lab2
+```
 
 ### 2.2 编译、运行和验证
 
