@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common.h"
-
 #include "syntax_analyzer.h"
 #include "SyntaxTree.h"
 
@@ -14,12 +12,9 @@ int lines;
 int pos_start;
 int pos_end;
 
-
 void pass_node(char *text){
      yylval.node = newSyntaxTreeNode(text);
 }
-
-
 
 /*****************声明和选项设置  end*****************/
 

@@ -1,12 +1,24 @@
 # Lab2 实验文档
 
-## 0. 基础知识
+## 0 快速上手指南
 
-本次实验需要在实验 1 已完成的 `flex` 词法分析器的基础上，进一步使用 `bison` 完成语法分析器。为此，我们在这里简单介绍如何让 `bison` 和 `flex` 协同工作及其原理，并简单介绍 `bison` 的一些基础知识。
+本次实验需要在 Lab 1 已完成的 `flex` 词法分析器的基础上，进一步使用 `bison` 完成语法分析器。
 
-### 0.1 Cminus-f 语法
+### 主要工作
 
-Cminus 语言的语法请参考《编译原理与实践》第九章附录，本节仅简要概括 Cminus-f 的语法。
+1. 了解 `bison` 基础知识和理解 Cminus 语法（重在了解如何将文法产生式转换为 `bison` 语句）
+2. 阅读 `/src/common/SyntaxTree.c`，对应头文件 `/include/SyntaxTree.h`（重在理解分析树如何生成）
+3. 了解 `bison` 与 `flex` 之间是如何协同工作，并改写 Lab1 代码（提示：了解 `yylval` 是如何工作，在代码上层面如何将值传给`$1`、`$2`等）
+4. 将 Cminus 文法修改为 Cminus-f 文法，并补全 `/src/parser/syntax_analyzer.y` 文件
+
+Tips：在未编译的代码文件中是无法看到关于协同工作部分的代码，建议先编译 1.3 给出的计算器样例代码，再阅读 `/build/src/parser/` 中的 `syntax_analyzer.h` 与 `yntax_analyzer.c` 文件
+## 1. 基础知识
+
+我们在这里简单介绍如何让 `bison` 和 `flex` 协同工作及其原理，并简单介绍 `bison` 的一些基础知识。
+
+### 1.1 Cminus-f 语法
+
+本节将给出 Cminus 语言的语法，语法详情请参考《编译原理与实践》第九章附录。本节仅简要概括 Cminus-f 的语法。
 
 我们将 Cminus-f 的所有规则分为五类。
 
@@ -48,7 +60,39 @@ Cminus 语言的语法请参考《编译原理与实践》第九章附录，本�
 
 **请注意，我们在 Cminus-f 中增加了 `float` 类型，所以请务必对文法的相应部分作出修改。**（Hint: 修改很少。）
 
-### 0.2 Bison 简介
+#### Cminus语法
+
+1. $\text{program} \rightarrow \text{declaration-list}$
+2. $\text{declaration-list} \rightarrow \text{declaration-list}\ \text{declaration}\ |\ \text{declaration}$
+3. $\text{declaration} \rightarrow \text{var-declaration}\ |\ \text{fun-declaration}$
+4. $\text{var-declaration}\ \rightarrow \text{type-specifier}\ \textbf{ID}\ \textbf{;}\ |\ \text{type-specifier}\ \textbf{ID}\ \textbf{[}\ \textbf{NUM}\ \textbf{]}\ \textbf{;}$
+5. $\text{type-specifier} \rightarrow \textbf{int}\ |\ \textbf{void}$
+6. $\text{fun-declaration} \rightarrow \text{type-specifier}\ \textbf{ID}\ \textbf{(}\ \text{params}\ \textbf{)}\ \text{compound-stmt}$
+7. $\text{params} \rightarrow \text{param-list}\ |\ \textbf{void}$
+8. $\text{param-list} \rightarrow \text{param-list}\ ,\ \text{param}\ |\ \text{param}$
+9. $\text{param} \rightarrow \text{type-specifier}\ \textbf{ID}\ |\ \text{type-specifier}\ \textbf{ID}\ \textbf{[]}$
+10. $\text{compound-stmt} \rightarrow \textbf{\{}\ \text{local-declarations}\ \text{statement-list} \textbf{\}}$
+11. $\text{local-declarations} \rightarrow \text{local-declarations var-declaration}\ |\ \text{empty}$
+12. $\text{statement-list} \rightarrow \text{statement-list}\ \text{statement}\ |\ \text{empty}$
+13. $\begin{aligned}\text{statement} \rightarrow\ &\text{expression-stmt}\\ &|\ \text{compound-stmt}\\ &|\ \text{selection-stmt}\\ &|\ \text{iteration-stmt}\\ &|\ \text{return-stmt}\end{aligned}$
+14. $\text{expression-stmt} \rightarrow \text{expression}\ \textbf{;}\ |\ \textbf{;}$
+15. $\begin{aligned}\text{selection-stmt} \rightarrow\ &\textbf{if}\ \textbf{(}\ \text{expression}\ \textbf{)}\ \text{statement}\\ &|\ \textbf{if}\ \textbf{(}\ \text{expression}\ \textbf{)}\ \text{statement}\ \textbf{else}\ \text{statement}\end{aligned}$
+16. $\text{iteration-stmt} \rightarrow \textbf{while}\ \textbf{(}\ \text{expression}\ \textbf{)}\ \text{statement}$
+17. $\text{return-stmt} \rightarrow \textbf{return}\ \textbf{;}\ |\ \textbf{return}\ \text{expression}\ \textbf{;}$
+18. $\text{expression} \rightarrow \text{var}\ \textbf{=}\ \text{expression}\ |\ \text{simple-expression}$
+19. $\text{var} \rightarrow \textbf{ID}\ |\ \textbf{ID}\ \textbf{[}\ \text{expression} \textbf{]}$
+20. $\text{simple-expression} \rightarrow \text{additive-expression}\ \text{relop}\ \text{additive-expression}\ |\ \text{additive-expression}$
+21. $\text{relop}\ \rightarrow \textbf{<=}\ |\ \textbf{<}\ |\ \textbf{>}\ |\ \textbf{>=}\ |\ \textbf{==}\ |\ \textbf{!=}$
+22. $\text{additive-expression} \rightarrow \text{additive-expression}\ \text{addop}\ \text{term}\ |\ \text{term}$
+23. $\text{addop} \rightarrow \textbf{+}\ |\ \textbf{-}$
+24. $\text{term} \rightarrow \text{term}\ \text{mulop}\ \text{factor}\ |\ \text{factor}$
+25. $\text{mulop} \rightarrow \textbf{*}\ |\ \textbf{/}$
+26. $\text{factor} \rightarrow \textbf{(}\ \text{expression}\ \textbf{)}\ |\ \text{var}\ |\ \text{call}\ |\ \textbf{NUM}$
+27. $\text{call} \rightarrow \textbf{ID}\ \textbf{(}\ \text{args} \textbf{)}$
+28. $\text{args} \rightarrow \text{arg-list}\ |\ \text{empty}$
+29. $\text{arg-list} \rightarrow \text{arg-list}\ \textbf{,}\ \text{expression}\ |\ \text{expression}$
+
+### 1.2 Bison 简介
 
 Bison 是一款解析器生成器（parser generator），它可以将 LALR 文法转换成可编译的 C 代码，从而大大减轻程序员手动设计解析器的负担。Bison 是 GNU 对早期 Unix 的 Yacc 工具的一个重新实现，所以文件扩展名为 `.y`。（Yacc 的意思是 Yet Another Compiler Compiler。）
 
@@ -132,7 +176,7 @@ syntax error <-- 发现了错误
 
 于是我们验证了上述代码的确识别了该文法定义的语言 `{ "", "R" }`。
 
-### 0.3 Bison 和 Flex 的关系
+### 1.3 Bison 和 Flex 的关系
 
 聪明的你应该发现了，我们这里手写了一个 `yylex` 函数作为词法分析器。而 lab1 我们正好使用 flex 自动生成了一个词法分析器。如何让这两者协同工作呢？特别是，我们需要在这两者之间共享 token 定义和一些数据，难道要手动维护吗？哈哈，当然不用！下面我们用一个四则运算计算器来简单介绍如何让 bison 和 flex 协同工作——重点是如何维护解析器状态、`YYSTYPE` 和头文件的生成。
 
@@ -321,7 +365,7 @@ $ ./calc
 
 最后还得提一下，尽管上面所讲已经足够应付很大一部分解析需求了，但是 bison 还有一些高级功能，比如自动处理运算符的优先级和结合性（于是我们就不需要手动把 `expr` 拆成 `factor`, `term` 了）。这部分功能，就留给同学们自己去探索吧！
 
-## 1. 实验要求
+## 2. 实验要求
 
 本次实验需要各位同学首先将自己的 lab1 的词法部分复制到 `/src/parser` 目录的 [lexical\_analyzer.l](./src/parser/lexical\_analyzer.l)，然后根据 `cminux-f` 的语法补全 [syntax\_analyer.y](./src/parser/syntax_analyzer.y) 文件并合理修改 [lexical\_analyzer.l](./src/parser/lexical\_analyzer.l) 的相应部分，完成语法分析器，要求最终能够输出解析树。如：
 
@@ -375,11 +419,11 @@ float foo(void) { return 1.0; }
 
 请注意，上述解析树含有每个解析规则的所有子成分，包括诸如 `;` `{` `}` 这样的符号，请在编写规则时务必不要忘了它们。
 
-### 1.1 目录结构
+### 2.1 目录结构
 
 [TODO]
 
-### 1.2 编译、运行和验证
+### 2.2 编译、运行和验证
 
 * 编译
 
@@ -428,7 +472,7 @@ float foo(void) { return 1.0; }
   
   **请注意助教提供的`testcase`并不能涵盖全部的测试情况，完成此部分仅能拿到基础分，请自行设计自己的`testcase`进行测试。**
   
-### 1.3 提交要求和评分标准
+### 2.3 提交要求和评分标准
 
 * 提交要求
 
