@@ -4,10 +4,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "common.h"
 #include "SyntaxTree.h"
-
-#include "lexical_analyzer.h"
 
 // external functions from lex
 extern int yylex();
@@ -47,12 +44,13 @@ SyntaxTreeNode * epsilon(SyntaxTreeNode * parent, char * parent_name){
 void yyerror(const char * s);
 %}
 
+/* TODO: Complete this definition. */
 %union {
      struct _SyntaxTreeNode * node;
      char * name;
 }
 
-%token <node> ERROR 
+/* TODO: Your tokens here. */
 %token <node> ADD 
 %token <node> SUB 
 %token <node> MUL 
@@ -88,13 +86,12 @@ void yyerror(const char * s);
 //%token <node> COMMENT 
 %type <node> program declaration-list declaration var-declaration type-specifier fun-declaration params param-list param compound-stmt local-declarations statement-list statement expression-stmt selection-stmt iteration-stmt return-stmt expression var simple-expression relop additive-expression addop term mulop factor call args arg-list
 
-
-
 /* compulsory starting symbol */
 %start program
 
 %%
-/*************** TODO: Your rules here *****************/
+/* TODO: Your rules here. */
+
 program : 	declaration-list {$$ = addparent($$, "program", 1, $1); gt->root = $$;}
 		;
 
@@ -219,23 +216,24 @@ arg-list 	: 	arg-list COMMA expression {$$ = addparent($$, "arg-list", 3, $1, $2
 
 %%
 
+/// The error reporting function.
 void yyerror(const char * s)
 {
-	// TODO: variables in Lab1 updates only in analyze() function in lexical_analyzer.l
-	//       You need to move position updates to show error output below
-	fprintf(stderr, "%s: %d %d %d syntax error for %s %s\n", s, lines, pos_start, pos_end, yytext);
+    // TO STUDENTS: This is just an example.
+    // You can customize it as you like.
+    fprintf(stderr, "error at line %d column %d: %s\n", lines, pos_start, s);
 }
 
+/// Parse input from stdin, and prints the parsing results to stdout.
+///
+/// This function initializes essential states before running yyparse().
 void parse()
 {
      lines = pos_start = pos_end = 1;
      gt = newSyntaxTree();
-     yyin = stdin;
-     yyrestart(yyin);
-
-     yyparse();
-     printSyntaxTree(stdout, gt);
-
+     if (!yyparse()) {
+         printSyntaxTree(stdout, gt);
+     }
      deleteSyntaxTree(gt);
      gt = NULL;
 }

@@ -61,8 +61,5 @@ while 	{pos_end += 5; pass_node(yytext); return WHILE;}
 "/*"             { BEGIN(COMMENT); }
 <COMMENT>"*/"    { BEGIN(INITIAL); }
 <COMMENT>(.|\n)  { }
-<COMMENT><<EOF>> { yyerror("Unexpected file end (unterminated comment).\n"); }
-
-. {return ERROR;} 
 
 %%
