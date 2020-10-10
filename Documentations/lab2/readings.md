@@ -109,15 +109,15 @@ factor("2x") = (Some(Expr.Mul(Expr.Const(2), Expr.Val("x"))), "")
 
 下面介绍一个著名的问题 [Post correspondence problem](https://en.wikipedia.org/wiki/Post_correspondence_problem)，来说明有时候人类的直觉是很不靠谱的。
 
-给定相同长度的两个字符串列表 a₁, a₂, a₃, ..., aₙ 和 b₁, b₂, b₃, ..., bₙ，回答：是否存在一列下标 i₁, i₂, ..., iₖ，使得 a[i₁] a[i₂] ... a[iₖ] = b[i₁] b[i₂] ... b[iₖ]？
+给定相同长度的两个字符串列表 a[1], a[2], a[3], ..., a[n] 和 b[1], b[2], b[3], ..., b[n]，回答：是否存在一列下标 i[1], i[2], ..., i[k]，使得 a[i[1]] a[i[2]] ... a[i[k]] = b[i[1]] b[i[2]] ... b[i[k]]？
 
 帮助大家有一个感性认识，下面复读一下 Wikipedia 上的例子：
 
-| a₁    | a₂    | a₃ |
+| a₁    | a₂    | a₃    |
 | ----- | ----- | ----- |
 | a     | ab    | bba   |
 
-| b₁ | b₂ | b₃ |
+| b₁    | b₂    | b₃    |
 | ----- | ----- | ----- |
 | baa   | aa    | bb    |
 
