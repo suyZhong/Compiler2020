@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "syntax_analyzer.h"
 #include "SyntaxTree.h"
+#include "syntax_analyzer.h"
 
 int files_count;
 int lines;
