@@ -63,6 +63,6 @@ while 	{pos_start = pos_end; pos_end += 5; pass_node(yytext); return WHILE;}
 <COMMENT>.  { pos_start = pos_end; pos_start += 1; }
 <COMMENT>\n { pos_start = 1; pos_end = 1; lines++; }
 
-. { return ERROR; }
+. { pos_start = pos_end; pos_end++; return ERROR; }
 
 %%
