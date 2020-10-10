@@ -1,51 +1,5 @@
 >--+ program
 |  >--+ declaration-list
-|  |  >--+ declaration-list
-|  |  |  >--+ declaration
-|  |  |  |  >--+ fun-declaration
-|  |  |  |  |  >--+ type-specifier
-|  |  |  |  |  |  >--* int
-|  |  |  |  |  >--* foo
-|  |  |  |  |  >--* (
-|  |  |  |  |  >--+ params
-|  |  |  |  |  |  >--* void
-|  |  |  |  |  >--* )
-|  |  |  |  |  >--+ compound-stmt
-|  |  |  |  |  |  >--* {
-|  |  |  |  |  |  >--+ local-declarations
-|  |  |  |  |  |  |  >--+ local-declarations
-|  |  |  |  |  |  |  |  >--+ local-declarations
-|  |  |  |  |  |  |  |  |  >--+ local-declarations
-|  |  |  |  |  |  |  |  |  |  >--* epsilon
-|  |  |  |  |  |  |  |  |  >--+ var-declaration
-|  |  |  |  |  |  |  |  |  |  >--+ type-specifier
-|  |  |  |  |  |  |  |  |  |  |  >--* int
-|  |  |  |  |  |  |  |  |  |  >--* i
-|  |  |  |  |  |  |  |  |  |  >--* ;
-|  |  |  |  |  |  |  |  >--+ var-declaration
-|  |  |  |  |  |  |  |  |  >--+ type-specifier
-|  |  |  |  |  |  |  |  |  |  >--* int
-|  |  |  |  |  |  |  |  |  >--* j
-|  |  |  |  |  |  |  |  |  >--* ;
-|  |  |  |  |  |  |  >--+ var-declaration
-|  |  |  |  |  |  |  |  >--+ type-specifier
-|  |  |  |  |  |  |  |  |  >--* void
-|  |  |  |  |  |  |  |  >--* v
-|  |  |  |  |  |  |  |  >--* ;
-|  |  |  |  |  |  >--+ statement-list
-|  |  |  |  |  |  |  >--+ statement-list
-|  |  |  |  |  |  |  |  >--* epsilon
-|  |  |  |  |  |  |  >--+ statement
-|  |  |  |  |  |  |  |  >--+ return-stmt
-|  |  |  |  |  |  |  |  |  >--* return
-|  |  |  |  |  |  |  |  |  >--+ expression
-|  |  |  |  |  |  |  |  |  |  >--+ simple-expression
-|  |  |  |  |  |  |  |  |  |  |  >--+ additive-expression
-|  |  |  |  |  |  |  |  |  |  |  |  >--+ term
-|  |  |  |  |  |  |  |  |  |  |  |  |  >--+ factor
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  >--* 1
-|  |  |  |  |  |  |  |  |  >--* ;
-|  |  |  |  |  |  >--* }
 |  |  >--+ declaration
 |  |  |  >--+ fun-declaration
 |  |  |  |  >--+ type-specifier
@@ -58,7 +12,25 @@
 |  |  |  |  >--+ compound-stmt
 |  |  |  |  |  >--* {
 |  |  |  |  |  >--+ local-declarations
-|  |  |  |  |  |  >--* epsilon
+|  |  |  |  |  |  >--+ local-declarations
+|  |  |  |  |  |  |  >--+ local-declarations
+|  |  |  |  |  |  |  |  >--+ local-declarations
+|  |  |  |  |  |  |  |  |  >--* epsilon
+|  |  |  |  |  |  |  |  >--+ var-declaration
+|  |  |  |  |  |  |  |  |  >--+ type-specifier
+|  |  |  |  |  |  |  |  |  |  >--* int
+|  |  |  |  |  |  |  |  |  >--* i
+|  |  |  |  |  |  |  |  |  >--* ;
+|  |  |  |  |  |  |  >--+ var-declaration
+|  |  |  |  |  |  |  |  >--+ type-specifier
+|  |  |  |  |  |  |  |  |  >--* float
+|  |  |  |  |  |  |  |  >--* j
+|  |  |  |  |  |  |  |  >--* ;
+|  |  |  |  |  |  >--+ var-declaration
+|  |  |  |  |  |  |  >--+ type-specifier
+|  |  |  |  |  |  |  |  >--* void
+|  |  |  |  |  |  |  >--* v
+|  |  |  |  |  |  |  >--* ;
 |  |  |  |  |  >--+ statement-list
 |  |  |  |  |  |  >--+ statement-list
 |  |  |  |  |  |  |  >--* epsilon

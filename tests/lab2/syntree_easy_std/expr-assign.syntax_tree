@@ -12,7 +12,19 @@
 |  |  |  |  >--+ compound-stmt
 |  |  |  |  |  >--* {
 |  |  |  |  |  >--+ local-declarations
-|  |  |  |  |  |  >--* epsilon
+|  |  |  |  |  |  >--+ local-declarations
+|  |  |  |  |  |  |  >--+ local-declarations
+|  |  |  |  |  |  |  |  >--* epsilon
+|  |  |  |  |  |  |  >--+ var-declaration
+|  |  |  |  |  |  |  |  >--+ type-specifier
+|  |  |  |  |  |  |  |  |  >--* int
+|  |  |  |  |  |  |  |  >--* a
+|  |  |  |  |  |  |  |  >--* ;
+|  |  |  |  |  |  >--+ var-declaration
+|  |  |  |  |  |  |  >--+ type-specifier
+|  |  |  |  |  |  |  |  >--* int
+|  |  |  |  |  |  |  >--* b
+|  |  |  |  |  |  |  >--* ;
 |  |  |  |  |  >--+ statement-list
 |  |  |  |  |  |  >--+ statement-list
 |  |  |  |  |  |  |  >--+ statement-list
@@ -30,17 +42,9 @@
 |  |  |  |  |  |  |  |  |  |  |  >--+ expression
 |  |  |  |  |  |  |  |  |  |  |  |  >--+ simple-expression
 |  |  |  |  |  |  |  |  |  |  |  |  |  >--+ additive-expression
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  >--+ additive-expression
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  >--+ term
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  >--+ factor
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  >--+ var
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  >--* c
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  >--+ addop
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  >--* +
 |  |  |  |  |  |  |  |  |  |  |  |  |  |  >--+ term
 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  >--+ factor
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  >--+ var
-|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  >--* d
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  >--* 1
 |  |  |  |  |  |  |  |  |  >--* ;
 |  |  |  |  |  |  >--+ statement
 |  |  |  |  |  |  |  >--+ return-stmt
