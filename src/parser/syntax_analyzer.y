@@ -18,30 +18,14 @@ extern char * yytext;
 extern int pos_end;
 extern int pos_start;
 
-// Global syntax tree.
-SyntaxTree * gt;
-	
-SyntaxTreeNode * addparent(SyntaxTreeNode * parent, char * parent_name, int num, ...){
-	va_list ap;
-	va_start(ap, num);
-	parent = newSyntaxTreeNode(parent_name);
-	SyntaxTreeNode	* child;
-	for(int i = 0; i < num; i++){
-		child = va_arg(ap, SyntaxTreeNode*);
-		SyntaxTreeNode_AddChild(parent, child);
-	}
-	va_end(ap);
-	return parent;
-}
+// Global syntax tree
+SyntaxTree *gt;
 
-SyntaxTreeNode * epsilon(SyntaxTreeNode * parent, char * parent_name){
-	parent = newSyntaxTreeNode(parent_name);
-	SyntaxTreeNode * child = newSyntaxTreeNode("epsilon");
-	SyntaxTreeNode_AddChild(parent, child);
-	return parent;
-}
+// Error reporting
+void yyerror(const char *s);
 
-void yyerror(const char * s);
+// Helper functions written for you with love
+SyntaxTreeNode *node(const char *node_name, int children_num, ...);
 %}
 
 /* TODO: Complete this definition. */
@@ -93,126 +77,126 @@ void yyerror(const char * s);
 %%
 /* TODO: Your rules here. */
 
-program : 	declaration-list {$$ = addparent($$, "program", 1, $1); gt->root = $$;}
+program : 	declaration-list {$$ = node( "program", 1, $1); gt->root = $$;}
 		;
 
-declaration-list 	: 	declaration-list declaration {$$ = addparent($$, "declaration-list", 2, $1, $2);}
-					|	declaration {$$ = addparent($$, "declaration-list", 1, $1);}
+declaration-list 	: 	declaration-list declaration {$$ = node( "declaration-list", 2, $1, $2);}
+					|	declaration {$$ = node( "declaration-list", 1, $1);}
 					;
 
-declaration : 	var-declaration {$$ = addparent($$, "declaration", 1, $1);}
-			| 	fun-declaration {$$ = addparent($$, "declaration", 1, $1);}
+declaration : 	var-declaration {$$ = node( "declaration", 1, $1);}
+			| 	fun-declaration {$$ = node( "declaration", 1, $1);}
 			;
 
-var-declaration : 	type-specifier IDENTIFIER SEMICOLON {$$ = addparent($$, "var-declaration", 3, $1, $2, $3);}
-                | 	type-specifier IDENTIFIER LBRACKET INTEGER RBRACKET SEMICOLON {$$ = addparent($$, "var-declaration", 6, $1, $2, $3, $4, $5, $6);}
+var-declaration : 	type-specifier IDENTIFIER SEMICOLON {$$ = node( "var-declaration", 3, $1, $2, $3);}
+                | 	type-specifier IDENTIFIER LBRACKET INTEGER RBRACKET SEMICOLON {$$ = node( "var-declaration", 6, $1, $2, $3, $4, $5, $6);}
                 ;
 
-type-specifier 	: 	INT {$$ = addparent($$, "type-specifier", 1, $1);}
-| FLOAT { $$ = addparent($$, "type-specifier", 1, $1); }
-				| 	VOID {$$ = addparent($$, "type-specifier", 1, $1);}
+type-specifier 	: 	INT {$$ = node( "type-specifier", 1, $1);}
+| FLOAT { $$ = node( "type-specifier", 1, $1); }
+				| 	VOID {$$ = node( "type-specifier", 1, $1);}
 				;
 
-fun-declaration : 	type-specifier IDENTIFIER LPARENTHESE params RPARENTHESE compound-stmt {$$ = addparent($$, "fun-declaration", 6, $1, $2, $3, $4, $5, $6);}
+fun-declaration : 	type-specifier IDENTIFIER LPARENTHESE params RPARENTHESE compound-stmt {$$ = node( "fun-declaration", 6, $1, $2, $3, $4, $5, $6);}
 				;
 
-params 	: 	param-list {$$ = addparent($$, "params", 1, $1);}
-		|	VOID {$$ = addparent($$, "params", 1, $1);}
+params 	: 	param-list {$$ = node( "params", 1, $1);}
+		|	VOID {$$ = node( "params", 1, $1);}
 		;
 		
-param-list 	: 	param-list COMMA param {$$ = addparent($$, "param-list", 3, $1, $2, $3);}
-			| 	param {$$ = addparent($$, "param-list", 1, $1);}
+param-list 	: 	param-list COMMA param {$$ = node( "param-list", 3, $1, $2, $3);}
+			| 	param {$$ = node( "param-list", 1, $1);}
 			;
 
-param 	: 	type-specifier IDENTIFIER {$$ = addparent($$, "param", 2, $1, $2);}
-		| 	type-specifier IDENTIFIER ARRAY {$$ = addparent($$, "param", 3, $1, $2, $3);}
+param 	: 	type-specifier IDENTIFIER {$$ = node( "param", 2, $1, $2);}
+		| 	type-specifier IDENTIFIER ARRAY {$$ = node( "param", 3, $1, $2, $3);}
 		;
 
-compound-stmt 	: 	LBRACE local-declarations statement-list RBRACE {$$ = addparent($$, "compound-stmt", 4, $1, $2, $3, $4);}
+compound-stmt 	: 	LBRACE local-declarations statement-list RBRACE {$$ = node( "compound-stmt", 4, $1, $2, $3, $4);}
 				;
 
-local-declarations 	: 	local-declarations var-declaration {$$ = addparent($$, "local-declarations", 2, $1, $2);}
-					| 	{$$ = epsilon($$, "local-declarations");} 
+local-declarations 	: 	local-declarations var-declaration {$$ = node( "local-declarations", 2, $1, $2);}
+| 	{$$ = node( "local-declarations",0);} 
 					;
 			
-statement-list 	: 	statement-list statement {$$ = addparent($$, "statement-list", 2, $1, $2);}
-				| 	{$$ = epsilon($$, "statement-list");}
+statement-list 	: 	statement-list statement {$$ = node( "statement-list", 2, $1, $2);}
+| 	{$$ = node( "statement-list",0);}
 				;
 				
-statement 	: 	expression-stmt {$$ = addparent($$, "statement", 1, $1);}
-            | 	compound-stmt {$$ = addparent($$, "statement", 1, $1);}
-			| 	selection-stmt {$$ = addparent($$, "statement", 1, $1);}
-			| 	iteration-stmt {$$ = addparent($$, "statement", 1, $1);}
-			| 	return-stmt {$$ = addparent($$, "statement", 1, $1);}
+statement 	: 	expression-stmt {$$ = node( "statement", 1, $1);}
+            | 	compound-stmt {$$ = node( "statement", 1, $1);}
+			| 	selection-stmt {$$ = node( "statement", 1, $1);}
+			| 	iteration-stmt {$$ = node( "statement", 1, $1);}
+			| 	return-stmt {$$ = node( "statement", 1, $1);}
 			;
 			
-expression-stmt : 	expression SEMICOLON {$$ = addparent($$, "expression-stmt", 2, $1, $2);}
-				| 	SEMICOLON {$$ = addparent($$, "expression-stmt", 1, $1);}
+expression-stmt : 	expression SEMICOLON {$$ = node( "expression-stmt", 2, $1, $2);}
+				| 	SEMICOLON {$$ = node( "expression-stmt", 1, $1);}
 				;
 				
-selection-stmt 	: 	IF LPARENTHESE expression RPARENTHESE statement {$$ = addparent($$, "selection-stmt", 5, $1, $2, $3, $4, $5);}
-				| 	IF LPARENTHESE expression RPARENTHESE statement ELSE statement {$$ = addparent($$, "selection-stmt", 7, $1, $2, $3, $4, $5, $6, $7);}
+selection-stmt 	: 	IF LPARENTHESE expression RPARENTHESE statement {$$ = node( "selection-stmt", 5, $1, $2, $3, $4, $5);}
+				| 	IF LPARENTHESE expression RPARENTHESE statement ELSE statement {$$ = node( "selection-stmt", 7, $1, $2, $3, $4, $5, $6, $7);}
 				;
 
-iteration-stmt 	: 	WHILE LPARENTHESE expression RPARENTHESE statement {$$ = addparent($$, "iteration-stmt", 5, $1, $2, $3, $4, $5);}
+iteration-stmt 	: 	WHILE LPARENTHESE expression RPARENTHESE statement {$$ = node( "iteration-stmt", 5, $1, $2, $3, $4, $5);}
 				;
 
-return-stmt : 	RETURN SEMICOLON {$$ = addparent($$, "return-stmt", 1, $1);}
-			| 	RETURN expression SEMICOLON {$$ = addparent($$, "return-stmt", 3, $1, $2, $3);}
+return-stmt : 	RETURN SEMICOLON {$$ = node( "return-stmt", 1, $1);}
+			| 	RETURN expression SEMICOLON {$$ = node( "return-stmt", 3, $1, $2, $3);}
 			;
 
-expression 	: 	var ASSIN expression {$$ = addparent($$, "expression", 3, $1, $2, $3);}
-			| 	simple-expression {$$ = addparent($$, "expression", 1, $1);}
+expression 	: 	var ASSIN expression {$$ = node( "expression", 3, $1, $2, $3);}
+			| 	simple-expression {$$ = node( "expression", 1, $1);}
 			;
 	
-var : 	IDENTIFIER {$$ = addparent($$, "var", 1, $1);}
-    | 	IDENTIFIER LBRACKET expression RBRACKET {$$ = addparent($$, "var", 4, $1, $2, $3, $4);}
+var : 	IDENTIFIER {$$ = node( "var", 1, $1);}
+    | 	IDENTIFIER LBRACKET expression RBRACKET {$$ = node( "var", 4, $1, $2, $3, $4);}
     ;
 
-simple-expression 	: 	additive-expression relop additive-expression {$$ = addparent($$, "simple-expression", 3, $1, $2, $3);}
-					| 	additive-expression {$$ = addparent($$, "simple-expression", 1, $1);}
+simple-expression 	: 	additive-expression relop additive-expression {$$ = node( "simple-expression", 3, $1, $2, $3);}
+					| 	additive-expression {$$ = node( "simple-expression", 1, $1);}
 					;
 
-relop 	: 	LT {$$ = addparent($$, "relop", 1, $1);}
-		| 	LTE {$$ = addparent($$, "relop", 1, $1);}
-		| 	GT {$$ = addparent($$, "relop", 1, $1);}
-		| 	GTE {$$ = addparent($$, "relop", 1, $1);}
-		| 	EQ {$$ = addparent($$, "relop", 1, $1);}
-		| 	NEQ {$$ = addparent($$, "relop", 1, $1);}
+relop 	: 	LT {$$ = node( "relop", 1, $1);}
+		| 	LTE {$$ = node( "relop", 1, $1);}
+		| 	GT {$$ = node( "relop", 1, $1);}
+		| 	GTE {$$ = node( "relop", 1, $1);}
+		| 	EQ {$$ = node( "relop", 1, $1);}
+		| 	NEQ {$$ = node( "relop", 1, $1);}
 		;
 
-additive-expression : 	additive-expression addop term  {$$ = addparent($$, "additive-expression", 3, $1, $2, $3);}
-					| 	term {$$ = addparent($$, "additive-expression", 1, $1);}
+additive-expression : 	additive-expression addop term  {$$ = node( "additive-expression", 3, $1, $2, $3);}
+					| 	term {$$ = node( "additive-expression", 1, $1);}
 					;
 
-addop 	: 	ADD {$$ = addparent($$, "addop", 1, $1);}
-		|	SUB {$$ = addparent($$, "addop", 1, $1);}
+addop 	: 	ADD {$$ = node( "addop", 1, $1);}
+		|	SUB {$$ = node( "addop", 1, $1);}
 		;
 
-term 	: 	term mulop factor {$$ = addparent($$, "term", 3, $1, $2, $3);}
-		| 	factor {$$ = addparent($$, "term", 1, $1);}
+term 	: 	term mulop factor {$$ = node( "term", 3, $1, $2, $3);}
+		| 	factor {$$ = node( "term", 1, $1);}
 		;
 
-mulop 	: 	MUL {$$ = addparent($$, "mulop", 1, $1);}
-		|	DIV {$$ = addparent($$, "mulop", 1, $1);}
+mulop 	: 	MUL {$$ = node( "mulop", 1, $1);}
+		|	DIV {$$ = node( "mulop", 1, $1);}
 		;
 
-factor 	: 	LPARENTHESE expression RPARENTHESE {$$ = addparent($$, "factor", 3, $1, $2, $3);}
-		|	var {$$ = addparent($$, "factor", 1, $1);}
-		|	call {$$ = addparent($$, "factor", 1, $1);}
-		| 	INTEGER {$$ = addparent($$, "factor", 1, $1);}
-                | FLOATPOINT {$$ = addparent($$, "factor", 1, $1);}
+factor 	: 	LPARENTHESE expression RPARENTHESE {$$ = node( "factor", 3, $1, $2, $3);}
+		|	var {$$ = node( "factor", 1, $1);}
+		|	call {$$ = node( "factor", 1, $1);}
+		| 	INTEGER {$$ = node( "factor", 1, $1);}
+                | FLOATPOINT {$$ = node( "factor", 1, $1);}
 		;
 
-call 	: 	IDENTIFIER LPARENTHESE args RPARENTHESE {$$ = addparent($$, "call", 4, $1, $2, $3, $4);}
+call 	: 	IDENTIFIER LPARENTHESE args RPARENTHESE {$$ = node( "call", 4, $1, $2, $3, $4);}
 		;
 
-args 	: 	arg-list {$$ = addparent($$, "args", 1, $1);}
-		| 	{$$ = epsilon($$, "args");}
+args 	: 	arg-list {$$ = node( "args", 1, $1);}
+| 	{$$ = node( "args", 0);}
 		;
 
-arg-list 	: 	arg-list COMMA expression {$$ = addparent($$, "arg-list", 3, $1, $2, $3);}
-			| 	expression {$$ = addparent($$, "arg-list", 1, $1);}
+arg-list 	: 	arg-list COMMA expression {$$ = node( "arg-list", 3, $1, $2, $3);}
+			| 	expression {$$ = node( "arg-list", 1, $1);}
 			;
 
 %%
@@ -230,11 +214,33 @@ void yyerror(const char * s)
 /// This function initializes essential states before running yyparse().
 void parse()
 {
-     lines = pos_start = pos_end = 1;
-     gt = newSyntaxTree();
-     if (!yyparse()) {
-         printSyntaxTree(stdout, gt);
-     }
-     deleteSyntaxTree(gt);
-     gt = NULL;
+    lines = pos_start = pos_end = 1;
+    gt = newSyntaxTree();
+    if (!yyparse()) {
+        printSyntaxTree(stdout, gt);
+    }
+    deleteSyntaxTree(gt);
+    gt = NULL;
+}
+
+/// A helper function to quickly construct a tree node.
+///
+/// e.g. $$ = node("program", 1, $1);
+SyntaxTreeNode *node(const char *name, int children_num, ...)
+{
+    SyntaxTreeNode *p = newSyntaxTreeNode(name);
+    SyntaxTreeNode *child;
+    if (children_num == 0) {
+        child = newSyntaxTreeNode("epsilon");
+        SyntaxTreeNode_AddChild(p, child);
+    } else {
+        va_list ap;
+        va_start(ap, children_num);
+        for (int i = 0; i < children_num; ++i) {
+            child = va_arg(ap, SyntaxTreeNode *);
+            SyntaxTreeNode_AddChild(p, child);
+        }
+        va_end(ap);
+    }
+    return p;
 }
