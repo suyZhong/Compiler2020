@@ -549,7 +549,7 @@ float foo(void) { return 1.0; }
     * 不上传临时文件(凡是自动生成的文件和临时文件请不要上传);
     * git log言之有物(不强制, 请不要git commit -m 'commit 1', git commit -m 'sdfsdf'，每次commit请提交有用的comment信息)
   
-* 评分标准 [TODO]
+* 评分标准
 
   * git提交规范(10分);
   * 实现语法分析器并通过给出的 easy 测试集(一个3分，共20个，60分);
@@ -563,7 +563,7 @@ float foo(void) { return 1.0; }
   * `Hard Deadline` : [TODO]
   * 补交请邮件提醒TA：
   
-    * 邮箱：[TODO]
+    * 邮箱：ksqsf@mail.ustc.edu.cn, zym651@mail.ustc.edu.cn
     * 邮件主题：lab2迟交-学号
     * 内容：包括迟交原因、最后版本commitID、迟交时间等
 
