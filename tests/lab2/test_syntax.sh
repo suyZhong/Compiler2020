@@ -24,12 +24,11 @@ done
 if [[ ${2:-no} != "no" ]]; then
     echo "[info] Comparing..."
     if [[ ${2:-no} == "verbose" ]]; then
-        DIFF_FLAGS=-qr
-    fi
-    diff ${DIFF_FLAGS} $OUTPUT_DIR ${OUTPUT_DIR}_std
-    if [ $? ]; then
-        echo "[info] No difference! Congratulations!"
+        diff $OUTPUT_DIR ${OUTPUT_DIR}_std
     else
-        echo "[info] Differences spotted."
+        diff -qr $OUTPUT_DIR ${OUTPUT_DIR}_std
+    fi
+    if [ $? -eq 0 ]; then
+        echo "[info] No difference! Congratulations!"
     fi
 fi
