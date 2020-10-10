@@ -1,3 +1,7 @@
+int MyfuncA(int a, int b){
+	return a+b;
+}
+
 int main(void) {
-	return a(b(10, c()));
+	return MyfuncA(1, 2);
 }
