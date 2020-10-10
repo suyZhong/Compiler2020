@@ -8,10 +8,20 @@
 
 1. 了解 `bison` 基础知识和理解 Cminus 语法（重在了解如何将文法产生式转换为 `bison` 语句）
 2. 阅读 `/src/common/SyntaxTree.c`，对应头文件 `/include/SyntaxTree.h`（重在理解分析树如何生成）
-3. 了解 `bison` 与 `flex` 之间是如何协同工作，并改写 Lab1 代码（提示：了解 `yylval` 是如何工作，在代码上层面如何将值传给`$1`、`$2`等）
+3. 了解 `bison` 与 `flex` 之间是如何协同工作，并改写 Lab1 代码（提示：了解 `yylval` 是如何工作，在代码层面上如何将值传给`$1`、`$2`等）
 4. 将 Cminus 文法修改为 Cminus-f 文法，并补全 `/src/parser/syntax_analyzer.y` 文件
 
 Tips：在未编译的代码文件中是无法看到关于协同工作部分的代码，建议先编译 1.3 给出的计算器样例代码，再阅读 `/build/src/parser/` 中的 `syntax_analyzer.h` 与 `yntax_analyzer.c` 文件
+
+### 思考题
+
+本部分不算做实验分，出题的本意在于想要帮助同学们加深对实验细节的理解，欢迎有兴趣和余力的同学在报告中写下你的思考答案，或者在issue中分享出你的看法。
+
+1. 在1.3样例代码中存在左递归文法，为什么bison可以处理？（提示：不用研究bison内部运作机制，在下面知识介绍中有提到bison的一种属性，请结合课内知识思考）
+2. 请在代码层面上简述下yylval是怎么完成协同工作的。（提示：无需研究原理，只分析维护了什么数据结构，该数据结构是怎么和$1、$2等联系起来？）
+3. 请尝试使用1.3样例代码运行除法运算除数为0的例子（测试case中有）看下是否可以通过，如果不，为什么我们在case中把该例子认为是合法的？（请从语法与语义上简单思考）
+4. 能否尝试修改下1.3计算器文法，使得它支持除数0规避功能。
+
 ## 1. 基础知识
 
 我们在这里简单介绍如何让 `bison` 和 `flex` 协同工作及其原理，并简单介绍 `bison` 的一些基础知识。
@@ -58,15 +68,13 @@ Tips：在未编译的代码文件中是无法看到关于协同工作部分的�
 
 起始符号是 `program`。
 
-**请注意，我们在 Cminus-f 中增加了 `float` 类型，所以请务必对文法的相应部分作出修改。**（Hint: 修改很少。）
-
-#### Cminus语法
+#### Cminus-f语法
 
 1. $`\text{program} \rightarrow \text{declaration-list}`$
 2. $`\text{declaration-list} \rightarrow \text{declaration-list}\ \text{declaration}\ |\ \text{declaration}`$
 3. $`\text{declaration} \rightarrow \text{var-declaration}\ |\ \text{fun-declaration}`$
 4. $`\text{var-declaration}\ \rightarrow \text{type-specifier}\ \textbf{ID}\ \textbf{;}\ |\ \text{type-specifier}\ \textbf{ID}\ \textbf{[}\ \textbf{NUM}\ \textbf{]}\ \textbf{;}`$
-5. $`\text{type-specifier} \rightarrow \textbf{int}\ |\ \textbf{void}`$
+5. $`\text{type-specifier} \rightarrow \textbf{int}\ |\ \textbf{float}\ |\ \textbf{void}`$
 6. $`\text{fun-declaration} \rightarrow \text{type-specifier}\ \textbf{ID}\ \textbf{(}\ \text{params}\ \textbf{)}\ \text{compound-stmt}`$
 7. $`\text{params} \rightarrow \text{param-list}\ |\ \textbf{void}`$
 8. $`\text{param-list} \rightarrow \text{param-list}\ ,\ \text{param}\ |\ \text{param}`$
