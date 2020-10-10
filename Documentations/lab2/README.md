@@ -478,27 +478,27 @@ float foo(void) { return 1.0; }
   
   ```shell
   # test_syntax.sh 脚本将自动分析 ./tests/lab2/testcase_$1 下所有文件后缀为 .cminus 的文件，并将输出结果保存在 ./tests/lab2/syntree_$1 文件夹下
-  $ ./tests/lab2/test_syntax.sh basic
+  $ ./tests/lab2/test_syntax.sh easy
     ...
     ...
     ...
-  $ ls ./tests/lab2/syntree_basic
+  $ ls ./tests/lab2/syntree_easy
     <成功分析的文件>
-  $ ./tests/lab2/test_syntax.sh standard
-  $ ls ./tests/lab2/syntree_standard
+  $ ./tests/lab2/test_syntax.sh normal
+  $ ls ./tests/lab2/syntree_normal
   ```
   
 * 验证
 
   本次试验测试案例较多，为此我们将这些测试分为两类：
   
-  1. basic: 这部分测试均比较简单且单纯，适合开发时调试。
-  2. standard: 较为综合，适合完成实验后系统测试。
+  1. easy: 这部分测试均比较简单且单纯，适合开发时调试。
+  2. normal: 较为综合，适合完成实验后系统测试。
 
   我们使用 `diff` 命令进行验证。将自己的生成结果和助教提供的 `xxx_std` 进行比较。
   
   ```shell
-  $ diff ./tests/lab2/syntree_basic ./tests/lab2/syntree_basic_std
+  $ diff ./tests/lab2/syntree_easy ./tests/lab2/syntree_easy_std
   # 如果结果完全正确，则没有任何输出结果
   # 如果有不一致，则会汇报具体哪个文件哪部分不一致
   # 使用 -qr 参数可以仅列出文件名
@@ -508,9 +508,9 @@ float foo(void) { return 1.0; }
   
   ```shell
   # test_syntax.sh 脚本将自动分析 ./tests/lab2/testcase_$1 下所有文件后缀为 .cminus 的文件，并将输出结果保存在 ./tests/lab2/syntree_$1 文件夹下
-  $ ./tests/lab2/test_syntax.sh basic yes
+  $ ./tests/lab2/test_syntax.sh easy yes
     <分析所有 .cminus 文件并将结果与标准对比，仅输出有差异的文件名>
-  $ ./tests/lab2/test_syntax.sh basic verbose
+  $ ./tests/lab2/test_syntax.sh easy verbose
     <分析所有 .cminus 文件并将结果与标准对比，详细输出所有差异>
   ```
   
@@ -542,8 +542,8 @@ float foo(void) { return 1.0; }
 * 评分标准 [TODO]
 
   * git提交规范(10分);
-  * 实现语法分析器并通过给出的 basic 测试集(一个3分，共20个，60分);
-  * 通过 standard 测试集(一个3分，共7个，不超过20分);
+  * 实现语法分析器并通过给出的 easy 测试集(一个3分，共20个，60分);
+  * 通过 normal 测试集(一个3分，共7个，不超过20分);
   * 提交后通过助教进阶的多个测试用例(10分)。
 
 
