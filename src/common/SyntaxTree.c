@@ -12,7 +12,7 @@ SyntaxTreeNode * newSyntaxTreeNode(const char * name)
 {
 	SyntaxTreeNode * newNode = (SyntaxTreeNode *)malloc(sizeof(SyntaxTreeNode));
 	if (name)
-		strcpy(newNode->name, name);
+		strncpy(newNode->name, name, SYNTAX_TREE_NODE_NAME_MAX);
 	else
 		newNode->name[0] = '\0';
 	newNode->children_num = 0;

@@ -3,12 +3,14 @@
 
 #include <stdio.h>
 
+#define SYNTAX_TREE_NODE_NAME_MAX 30
+
 struct _SyntaxTreeNode {
 	struct _SyntaxTreeNode * parent;
 	struct _SyntaxTreeNode * children[1000];
 	int children_num;
 
-	char name[30];
+	char name[SYNTAX_TREE_NODE_NAME_MAX];
 };
 typedef struct _SyntaxTreeNode SyntaxTreeNode;
 
