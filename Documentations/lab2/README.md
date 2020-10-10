@@ -95,7 +95,7 @@ Tips：在未编译的代码文件中是无法看到关于协同工作部分的�
 23. $`\text{addop} \rightarrow \textbf{+}\ |\ \textbf{-}`$
 24. $`\text{term} \rightarrow \text{term}\ \text{mulop}\ \text{factor}\ |\ \text{factor}`$
 25. $`\text{mulop} \rightarrow \textbf{*}\ |\ \textbf{/}`$
-26. $`\text{factor} \rightarrow \textbf{(}\ \text{expression}\ \textbf{)}\ |\ \text{var}\ |\ \text{call}\ |\ \textbf{INTEGER}`\ |\ \textbf{FLOATPOINT}`$
+26. $`\text{factor} \rightarrow \textbf{(}\ \text{expression}\ \textbf{)}\ |\ \text{var}\ |\ \text{call}\ |\ \textbf{INTEGER}\ |\ \textbf{FLOATPOINT}`$
 27. $`\text{call} \rightarrow \textbf{ID}\ \textbf{(}\ \text{args} \textbf{)}`$
 28. $`\text{args} \rightarrow \text{arg-list}\ |\ \text{empty}`$
 29. $`\text{arg-list} \rightarrow \text{arg-list}\ \textbf{,}\ \text{expression}\ |\ \text{expression}`$
