@@ -1,9 +1,5 @@
-int foo(void) {
-	int i; int j;
-	void v;
-	return 1;
-}
-
 int main(void) {
+	int i; float j;
+	void v;
 	return 0;
 }
