@@ -454,9 +454,9 @@ float foo(void) { return 1.0; }
 │   └── parser
 │       ├── lexical_analyzer.l <- lab1 的词法部分复制到这，并进行一定改写
 │       └── syntax_analyzer.y  <- lab2 需要完善的文件
-└── tests                       <- 测试文件
+└── tests                      <- 测试文件
     ├── lab1
-    └── lab2
+    └── lab2                   <- lab2 测试用例文件夹
 ```
 
 ### 2.2 编译、运行和验证
