@@ -1,9 +1,8 @@
 /*Basic num part*/
+int a;
+float x;
 
 int main(void){
-    int a;
-    float x;
-
     a = 0;
 
     x = 0.0;
