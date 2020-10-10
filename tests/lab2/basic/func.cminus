@@ -1,4 +1,4 @@
-int foo(int a, int b[]) {
+float foo(float a, float b[]) {
 	return 1;
 }
 

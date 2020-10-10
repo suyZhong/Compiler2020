@@ -62,4 +62,6 @@ while 	{pos_end += 5; pass_node(yytext); return WHILE;}
 <COMMENT>"*/"    { BEGIN(INITIAL); }
 <COMMENT>(.|\n)  { }
 
+. { return ERROR; }
+
 %%

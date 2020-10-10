@@ -51,6 +51,7 @@ void yyerror(const char * s);
 }
 
 /* TODO: Your tokens here. */
+%token <node> ERROR
 %token <node> ADD 
 %token <node> SUB 
 %token <node> MUL 
