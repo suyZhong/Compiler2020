@@ -85,7 +85,7 @@ factor("2x") = (Some(Expr.Mul(Expr.Const(2), Expr.Val("x"))), "")
 
 1. 可以处理二义文法和左递归的 [Earley parser](https://en.wikipedia.org/wiki/Earley_parser)。
 2. 线性时间的 [Packrat parser](https://en.wikipedia.org/wiki/Parsing_expression_grammar)。
-3. 使用动态规划思想设计的 \(O(n^3 |G|)\) 时间的 [CYK 算法](https://en.wikipedia.org/wiki/CYK_algorithm)。
+3. 使用动态规划思想设计的 $O(n^3 |G|)$ 时间的 [CYK 算法](https://en.wikipedia.org/wiki/CYK_algorithm)。
 4. 哪怕是在解析已经被视为 solved problem 的 2020 年，还有诸如 [Pika parser](https://arxiv.org/abs/2005.06444) 之类的算法在不断被提出。
 
 当然，这些算法知道名字就行了，实践中大概率是用不到的。
@@ -109,19 +109,19 @@ factor("2x") = (Some(Expr.Mul(Expr.Const(2), Expr.Val("x"))), "")
 
 下面介绍一个著名的问题 [Post correspondence problem](https://en.wikipedia.org/wiki/Post_correspondence_problem)，来说明有时候人类的直觉是很不靠谱的。
 
-给定相同长度的两个字符串列表 \(a_1, a_2, a_3, ..., a_N\) 和 \(b_1, b_2, b_3, ..., b_N\)，回答：是否存在一列下标 \(i_1, i_2, ..., i_K\)，使得 \(a_{i_1} a_{i_2} ... a_{i_K} = b_{i_1} b_{i_2} ... b_{i_K}\)？
+给定相同长度的两个字符串列表 $a_1, a_2, a_3, ..., a_N$ 和 $b_1, b_2, b_3, ..., b_N$，回答：是否存在一列下标 $i_1, i_2, ..., i_K$，使得 $a_{i_1} a_{i_2} ... a_{i_K} = b_{i_1} b_{i_2} ... b_{i_K}$？
 
 帮助大家有一个感性认识，下面复读一下 Wikipedia 上的例子：
 
-| \(a_1\) | \(a_2\) | \(a_3\) |
+| $a_1$ | $a_2$ | $a_3$ |
 | ----- | ----- | ----- |
 | a     | ab    | bba   |
 
-| \(b_1\) | \(b_2\) | \(b_3\) |
+| $b_1$ | $b_2$ | $b_3$ |
 | ----- | ----- | ----- |
 | baa   | aa    | bb    |
 
-对这组输入来说，这个问题是有解的，因为 \(a_3 a_2 a_3 a_1 = b_3 b_2 b_3 b_1\)。
+对这组输入来说，这个问题是有解的，因为 $a_3 a_2 a_3 a_1 = b_3 b_2 b_3 b_1$。
 
 尽管一时半会可能想不到高效的做法，但是直觉告诉我们，似乎可以去暴力枚举，然后一一比较……
 
