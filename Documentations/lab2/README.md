@@ -427,23 +427,24 @@ float foo(void) { return 1.0; }
 ├── Documentations
 │   ├── lab1
 │   └── lab2
-│       └── README.md  <- lab2实验文档说明
+│       ├── readings.md        <- 扩展阅读
+│       └── README.md          <- lab2实验文档说明（你在这里）
 ├── READMD.md
 ├── Reports
 │   ├── lab1
 │   └── lab2
-│       └── report.md  <- lab2所需提交的实验报告（你需要在此提交实验报告）
-├── include <- 实验所需的头文件
+│       └── report.md          <- lab2所需提交的实验报告（你需要在此提交实验报告）
+├── include                     <- 实验所需的头文件
 │   ├── lexical_analyzer.h
 │   └── SyntaxTree.h
-├── src  <- 源代码
+├── src                         <- 源代码
 │   ├── common
-│   │   └── SyntaxTree.c  <- 分析树相关代码
+│   │   └── SyntaxTree.c      <- 分析树相关代码
 │   ├── lexer
 │   └── parser
-│       ├── lexical_analyzer.l  <- lab1 的词法部分复制到这，并进行一定改写
+│       ├── lexical_analyzer.l <- lab1 的词法部分复制到这，并进行一定改写
 │       └── syntax_analyzer.y  <- lab2 需要完善的文件
-└── tests	 <- 测试文件
+└── tests                       <- 测试文件
     ├── lab1
     └── lab2
 ```
@@ -473,26 +474,44 @@ float foo(void) { return 1.0; }
   
   通过灵活使用重定向，可以比较方便地完成各种各样的需求，请同学们务必掌握这个 shell 功能。
   
-  此外，提供了 shell 脚本 `/tests/lab2/test_syntax.sh` 调用 `parser` 批量分析测试文件。
+  此外，提供了 shell 脚本 `/tests/lab2/test_syntax.sh` 调用 `parser` 批量分析测试文件。注意，这个脚本假设 `parser` 在 `项目目录/build` 下。
   
   ```shell
-  # test_syntax.sh 脚本将自动分析 ./tests/lab2/testcase 下所有文件后缀为 .cminus 的文件，并将输出结果保存在 ./tests/lab2/syntree 文件夹下
-  $ ./tests/lab2/test_syntax.sh
+  # test_syntax.sh 脚本将自动分析 ./tests/lab2/testcase_$1 下所有文件后缀为 .cminus 的文件，并将输出结果保存在 ./tests/lab2/syntree_$1 文件夹下
+  $ ./tests/lab2/test_syntax.sh basic
     ...
     ...
     ...
-  $ ls ./tests/lab2/syntree
+  $ ls ./tests/lab2/syntree_basic
     <成功分析的文件>
+  $ ./tests/lab2/test_syntax.sh standard
+  $ ls ./tests/lab2/syntree_standard
   ```
-
+  
 * 验证
 
-  我们使用 `diff` 命令进行验证。将自己的生成结果和助教提供的 `TA_syntree` 进行比较。
+  本次试验测试案例较多，为此我们将这些测试分为两类：
+  
+  1. basic: 这部分测试均比较简单且单纯，适合开发时调试。
+  2. standard: 较为综合，适合完成实验后系统测试。
+
+  我们使用 `diff` 命令进行验证。将自己的生成结果和助教提供的 `xxx_std` 进行比较。
   
   ```shell
-  $ diff ./tests/lab2/syntree ./tests/lab2/TA_syntree
+  $ diff ./tests/lab2/syntree_basic ./tests/lab2/syntree_basic_std
   # 如果结果完全正确，则没有任何输出结果
   # 如果有不一致，则会汇报具体哪个文件哪部分不一致
+  # 使用 -qr 参数可以仅列出文件名
+  ```
+  
+  `test_syntax.sh` 脚本也支持自动调用 `diff`。
+  
+  ```shell
+  # test_syntax.sh 脚本将自动分析 ./tests/lab2/testcase_$1 下所有文件后缀为 .cminus 的文件，并将输出结果保存在 ./tests/lab2/syntree_$1 文件夹下
+  $ ./tests/lab2/test_syntax.sh basic yes
+    <分析所有 .cminus 文件并将结果与标准对比，仅输出有差异的文件名>
+  $ ./tests/lab2/test_syntax.sh basic verbose
+    <分析所有 .cminus 文件并将结果与标准对比，详细输出所有差异>
   ```
   
   **请注意助教提供的`testcase`并不能涵盖全部的测试情况，完成此部分仅能拿到基础分，请自行设计自己的`testcase`进行测试。**
@@ -505,6 +524,7 @@ float foo(void) { return 1.0; }
   
   * 实验部分:
 
+    * 需要完善 `./src/lab2/lexical_analyer.y` 文件;
     * 需要完善 `./src/lab2/syntax_analyer.y` 文件;
     * 需要在 `./Report/lab2/report.md` 撰写实验报告。
     
@@ -521,9 +541,10 @@ float foo(void) { return 1.0; }
   
 * 评分标准 [TODO]
 
-  * git提交规范(20分);
-  * 实现语法分析器并通过给出的基本测试样例(一个10分，共60分);
-  * 提交后通过助教进阶的多个测试用例(20分)。
+  * git提交规范(10分);
+  * 实现语法分析器并通过给出的 basic 测试集(一个3分，共20个，60分);
+  * 通过 standard 测试集(一个3分，共7个，不超过20分);
+  * 提交后通过助教进阶的多个测试用例(10分)。
 
 
 * 迟交规定
