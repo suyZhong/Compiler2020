@@ -365,9 +365,9 @@ $ ./calc
   
   这样，以后用 `$` 去取某个值的时候，bison 就能自动生成类似 `stack[i].num` 这样的代码了。
   
-  `%token <op> ADDOP` 与之类似，但有一个副作用是顺便将 `ADDOP` 传递给 `%token`，这样一行代码相当于两行代码，岂不是很赚。
+  `%token<>` 见下一条。
 
-* `%token`：当我们用 `%token` 声明一个 token 时，这个 token 就可以在 C 代码中直接使用（注意 token 名千万不要和别的东西冲突！），也会导出到 `.h` 中，可以给 flex 用。
+* `%token`：当我们用 `%token` 声明一个 token 时，这个 token 就会导出到 `.h` 中，可以在 C 代码中直接使用（注意 token 名千万不要和别的东西冲突！），供 flex 使用。`%token <op> ADDOP` 与之类似，但顺便也将 `ADDOP` 传递给 `%type`，这样一行代码相当于两行代码，岂不是很赚。
 
 * `yylval`：这时候我们可以打开 `.h` 文件，看看里面有什么。除了 token 定义，最末尾还有一个 `extern YYSTYPE yylval;` 。这个变量我们上面已经使用了，通过这个变量，我们就可以在 lexer **里面**设置某个 token 的值。
 
