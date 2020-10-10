@@ -20,7 +20,7 @@ do
     $BUILD_DIR/parser < $testcase > $OUTPUT_DIR/${filename%.cminus}.syntax_tree
 done
 
-# Output a summary if the basic test suite is used.
+# Output a summary when requested.
 if [[ ${2:-no} != "no" ]]; then
     echo "[info] Comparing..."
     if [[ ${2:-no} == "verbose" ]]; then
