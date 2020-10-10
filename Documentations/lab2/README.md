@@ -11,7 +11,7 @@
 3. 了解 `bison` 与 `flex` 之间是如何协同工作，并改写 Lab1 代码（提示：了解 `yylval` 是如何工作，在代码层面上如何将值传给`$1`、`$2`等）
 4. 将 Cminus 文法修改为 Cminus-f 文法，并补全 `/src/parser/syntax_analyzer.y` 文件
 
-Tips：在未编译的代码文件中是无法看到关于协同工作部分的代码，建议先编译 1.3 给出的计算器样例代码，再阅读 `/build/src/parser/` 中的 `syntax_analyzer.h` 与 `yntax_analyzer.c` 文件
+Tips：在未编译的代码文件中是无法看到关于协同工作部分的代码，建议先编译 1.3 给出的计算器样例代码，再阅读 `/build/src/parser/` 中的 `syntax_analyzer.h` 与 `syntax_analyzer.c` 文件
 
 ### 思考题
 
@@ -73,7 +73,7 @@ Tips：在未编译的代码文件中是无法看到关于协同工作部分的�
 1. $`\text{program} \rightarrow \text{declaration-list}`$
 2. $`\text{declaration-list} \rightarrow \text{declaration-list}\ \text{declaration}\ |\ \text{declaration}`$
 3. $`\text{declaration} \rightarrow \text{var-declaration}\ |\ \text{fun-declaration}`$
-4. $`\text{var-declaration}\ \rightarrow \text{type-specifier}\ \textbf{ID}\ \textbf{;}\ |\ \text{type-specifier}\ \textbf{ID}\ \textbf{[}\ \textbf{NUM}\ \textbf{]}\ \textbf{;}`$
+4. $`\text{var-declaration}\ \rightarrow \text{type-specifier}\ \textbf{ID}\ \textbf{;}\ |\ \text{type-specifier}\ \textbf{ID}\ \textbf{[}\ \textbf{INTEGER}\ \textbf{]}\ \textbf{;}`$
 5. $`\text{type-specifier} \rightarrow \textbf{int}\ |\ \textbf{float}\ |\ \textbf{void}`$
 6. $`\text{fun-declaration} \rightarrow \text{type-specifier}\ \textbf{ID}\ \textbf{(}\ \text{params}\ \textbf{)}\ \text{compound-stmt}`$
 7. $`\text{params} \rightarrow \text{param-list}\ |\ \textbf{void}`$
@@ -95,7 +95,7 @@ Tips：在未编译的代码文件中是无法看到关于协同工作部分的�
 23. $`\text{addop} \rightarrow \textbf{+}\ |\ \textbf{-}`$
 24. $`\text{term} \rightarrow \text{term}\ \text{mulop}\ \text{factor}\ |\ \text{factor}`$
 25. $`\text{mulop} \rightarrow \textbf{*}\ |\ \textbf{/}`$
-26. $`\text{factor} \rightarrow \textbf{(}\ \text{expression}\ \textbf{)}\ |\ \text{var}\ |\ \text{call}\ |\ \textbf{NUM}`$
+26. $`\text{factor} \rightarrow \textbf{(}\ \text{expression}\ \textbf{)}\ |\ \text{var}\ |\ \text{call}\ |\ \textbf{INTEGER}`\ |\ \textbf{FLOATPOINT}`$
 27. $`\text{call} \rightarrow \textbf{ID}\ \textbf{(}\ \text{args} \textbf{)}`$
 28. $`\text{args} \rightarrow \text{arg-list}\ |\ \text{empty}`$
 29. $`\text{arg-list} \rightarrow \text{arg-list}\ \textbf{,}\ \text{expression}\ |\ \text{expression}`$
