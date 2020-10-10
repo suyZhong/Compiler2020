@@ -24,43 +24,44 @@ void pass_node(char *text){
 
 %%
 
-\+ 	{pos_end += 1; pass_node(yytext); return ADD;}
-\-	{pos_end += 1; pass_node(yytext); return SUB;}
-\*	{pos_end += 1; pass_node(yytext); return MUL;}
-\/	{pos_end += 1; pass_node(yytext); return DIV;}
-\<	{pos_end += 1; pass_node(yytext); return LT;}
-\<=	{pos_end += 2; pass_node(yytext); return LTE;}
-\>	{pos_end += 1; pass_node(yytext); return GT;}
-\>=	{pos_end += 2; pass_node(yytext); return GTE;}
-==	{pos_end += 2; pass_node(yytext); return EQ;}
-!=	{pos_end += 2; pass_node(yytext); return NEQ;}
-=	{pos_end += 1; pass_node(yytext); return ASSIN;}
-;	{pos_end += 1; pass_node(yytext); return SEMICOLON;}
-,	{pos_end += 1; pass_node(yytext); return COMMA;}
-\(	{pos_end += 1; pass_node(yytext); return LPARENTHESE;}
-\)	{pos_end += 1; pass_node(yytext); return RPARENTHESE;}
-\[	{pos_end += 1; pass_node(yytext); return LBRACKET;}
-\]	{pos_end += 1; pass_node(yytext); return RBRACKET;}
-\{	{pos_end += 1; pass_node(yytext); return LBRACE;}
-\}	{pos_end += 1; pass_node(yytext); return RBRACE;}
-else	{pos_end += 4; pass_node(yytext); return ELSE;}
-if	{pos_end += 2; pass_node(yytext); return IF;}
-int	{pos_end += 3; pass_node(yytext); return INT;}
-float   {pos_end += 5; pass_node(yytext); return FLOAT;}
-return 	{pos_end += 6; pass_node(yytext); return RETURN;}
-void 	{pos_end += 4; pass_node(yytext); return VOID;}
-while 	{pos_end += 5; pass_node(yytext); return WHILE;}
-[a-zA-Z]+	{pos_end += strlen(yytext); pass_node(yytext); return IDENTIFIER;}
-[0-9]+	{pos_end += strlen(yytext); pass_node(yytext); return INTEGER;}
-[0-9]+\.[0-9]*|[0-9]*\.[0-9]+ { pos_end += strlen(yytext); pass_node(yytext); return FLOATPOINT; }
-\[\]	{pos_end += 2; pass_node(yytext); return ARRAY;}
+\+ 	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return ADD;}
+\-	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return SUB;}
+\*	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return MUL;}
+\/	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return DIV;}
+\<	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return LT;}
+\<=	{pos_start = pos_end; pos_end += 2; pass_node(yytext); return LTE;}
+\>	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return GT;}
+\>=	{pos_start = pos_end; pos_end += 2; pass_node(yytext); return GTE;}
+==	{pos_start = pos_end; pos_end += 2; pass_node(yytext); return EQ;}
+!=	{pos_start = pos_end; pos_end += 2; pass_node(yytext); return NEQ;}
+=	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return ASSIN;}
+;	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return SEMICOLON;}
+,	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return COMMA;}
+\(	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return LPARENTHESE;}
+\)	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return RPARENTHESE;}
+\[	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return LBRACKET;}
+\]	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return RBRACKET;}
+\{	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return LBRACE;}
+\}	{pos_start = pos_end; pos_end += 1; pass_node(yytext); return RBRACE;}
+else	{pos_start = pos_end; pos_end += 4; pass_node(yytext); return ELSE;}
+if	{pos_start = pos_end; pos_end += 2; pass_node(yytext); return IF;}
+int	{pos_start = pos_end; pos_end += 3; pass_node(yytext); return INT;}
+float   {pos_start = pos_end; pos_end += 5; pass_node(yytext); return FLOAT;}
+return 	{pos_start = pos_end; pos_end += 6; pass_node(yytext); return RETURN;}
+void 	{pos_start = pos_end; pos_end += 4; pass_node(yytext); return VOID;}
+while 	{pos_start = pos_end; pos_end += 5; pass_node(yytext); return WHILE;}
+[a-zA-Z]+	{pos_start = pos_end; pos_end += strlen(yytext); pass_node(yytext); return IDENTIFIER;}
+[0-9]+	{pos_start = pos_end; pos_end += strlen(yytext); pass_node(yytext); return INTEGER;}
+[0-9]+\.[0-9]*|[0-9]*\.[0-9]+ { pos_start = pos_end; pos_end += strlen(yytext); pass_node(yytext); return FLOATPOINT; }
+\[\]	{pos_start = pos_end; pos_end += 2; pass_node(yytext); return ARRAY;}
 
 \n 	{lines++; pos_start = 1; pos_end = 1;}
-[ \t] 	{pos_start += 1; pos_end += 1;}
+[ \t] 	{pos_start = pos_end; pos_end += 1;}
 
-"/*"             { BEGIN(COMMENT); }
-<COMMENT>"*/"    { BEGIN(INITIAL); }
-<COMMENT>(.|\n)  { }
+"/*"             { pos_start = pos_end; pos_end += 2; BEGIN(COMMENT); }
+<COMMENT>"*/"    { pos_start = pos_end; pos_end += 2; BEGIN(INITIAL); }
+<COMMENT>.  { pos_start = pos_end; pos_start += 1; }
+<COMMENT>\n { pos_start = 1; pos_end = 1; lines++; }
 
 . { return ERROR; }
 
