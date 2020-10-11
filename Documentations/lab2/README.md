@@ -539,13 +539,13 @@ float foo(void) { return 1.0; }
     * 需要在 `./Report/lab2/report.md` 撰写实验报告。
     
       * 实验报告内容包括:
-        * 实验要求、实验难点、实验设计、实验结果验证、实验反馈(具体参考[report.md](./Reports/lab1/report.md));
+        * 实验要求、实验难点、实验设计、实验结果验证、实验反馈(具体参考[report.md](./Reports/lab2/report.md));
         * 实验报告不参与评分标准，但是必须完成并提交.
 
 
   * git提交规范：
 
-    * 不破坏目录结构;
+    * 不破坏目录结构(`report.md`所需的图片请放在`./Reports/lab2/figs/`下);
     * 不上传临时文件(凡是自动生成的文件和临时文件请不要上传);
     * git log言之有物(不强制, 请不要git commit -m 'commit 1', git commit -m 'sdfsdf'，每次commit请提交有用的comment信息)
   
