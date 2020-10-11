@@ -534,8 +534,8 @@ float foo(void) { return 1.0; }
   
   * 实验部分:
 
-    * 需要完善 `./src/lab2/lexical_analyer.y` 文件;
-    * 需要完善 `./src/lab2/syntax_analyer.y` 文件;
+    * 需要完善 `./src/parser/lexical_analyzer.l` 文件;
+    * 需要完善 `./src/parser/syntax_analyzer.y` 文件;
     * 需要在 `./Report/lab2/report.md` 撰写实验报告。
     
       * 实验报告内容包括:
