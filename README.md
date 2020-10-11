@@ -5,7 +5,7 @@
 *   [lab1](./Documentations/lab1/README.md)
     *   DDL : 2020/10/12, 23:59:59
 *   [lab2](./Documentations/lab2/README.md)
-    *   DDL : 
+    *   DDL : 2020/10/25, 23:59:59
 
 ### FAQ: How to merge upstream remote branches
 In brief, you need another alias for upstream repository (we assume you are now in your local copy of forked repository on Gitlab):
