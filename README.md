@@ -7,7 +7,7 @@
 *   [lab2](./Documentations/lab2/README.md)
     *   DDL : 
 
-### FAQ: How to merge upperstream remote branches
+### FAQ: How to merge upstream remote branches
 In brief, you need another alias for upstream repository (we assume you are now in your local copy of forked repository on Gitlab):
 ```
 (shell) $ git remote add upstream git@210.45.114.30:staff/2020fall-compiler_cminus.git
