@@ -30,7 +30,7 @@
 ##### 1.助教的测试样例：
 
 进行cmake和make之后，采用diff进行测试：
-![avatar](../img/testcase.png)
+![avatar](/home/cp/lab1.1/Reports/lab1/img/testcase.png)
 
 
 ##### 2.自己的测试样例：
@@ -80,7 +80,7 @@ void main()
 `./build/lexer ./test.cminus out`
 
 out文件的内容：
-![avatar](../img/out.png)
+![avatar](/home/cp/lab1.1/Reports/lab1/img/out.png)
 
 ## 实验反馈
 
