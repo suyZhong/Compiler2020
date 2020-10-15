@@ -558,8 +558,8 @@ float foo(void) { return 1.0; }
 
 * 迟交规定
 
-  * `Soft Deadline` : 2020/10/19 23:59:59 (北京标准时间, UTC+8)
-  * `Hard Deadline` : 2020/10/29 23:59:59 (北京标准时间, UTC+8)
+  * `Soft Deadline` : 2020/10/29 23:59:59 (北京标准时间, UTC+8)
+  * `Hard Deadline` : 2020/11/5 23:59:59 (北京标准时间, UTC+8)
   * 补交请邮件提醒TA：
   
     * 邮箱：ksqsf@mail.ustc.edu.cn, zym651@mail.ustc.edu.cn
