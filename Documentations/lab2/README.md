@@ -481,6 +481,7 @@ float foo(void) { return 1.0; }
   $ ./build/parser < test.cminus # 重定向标准输入
   <此时程序从 test.cminus 文件中读取输入，因此不需要输入任何内容。>
   <如果遇到了错误，将程序将报错并退出；否则，将输出解析树。>
+  $ ./build/parser test.cminus  # 不使用重定向，直接从 test.cminus 中读入
   $ ./build/parser < test.cminus > out
   <此时程序从 test.cminus 文件中读取输入，因此不需要输入任何内容。>
   <如果遇到了错误，将程序将报错并退出；否则，将输出解析树到 out 文件中。>

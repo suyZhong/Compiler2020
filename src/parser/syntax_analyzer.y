@@ -215,14 +215,19 @@ void yyerror(const char * s)
     fprintf(stderr, "error at line %d column %d: %s\n", lines, pos_start, s);
 }
 
-/// Parse input from stdin, and prints the parsing results to stdout.
+/// Parse input from file `input_path`, and prints the parsing results
+/// to stdout.  If input_path is NULL, read from stdin.
 ///
 /// This function initializes essential states before running yyparse().
 syntax_tree *parse(const char *input_path)
 {
-    if (!(yyin = fopen(input_path, "r"))) {
-        fprintf(stderr, "[ERR] Open input file %s failed.", input_path);
-        exit(1);
+    if (input_path != NULL) {
+        if (!(yyin = fopen(input_path, "r"))) {
+            fprintf(stderr, "[ERR] Open input file %s failed.\n", input_path);
+            exit(1);
+        }
+    } else {
+        yyin = stdin;
     }
 
     lines = pos_start = pos_end = 1;
