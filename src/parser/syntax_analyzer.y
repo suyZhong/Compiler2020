@@ -69,7 +69,7 @@ syntax_tree_node *node(const char *node_name, int children_num, ...);
 //%token <node> EOL
 //%token <node> BLANK
 //%token <node> COMMENT 
-%type <node> program declaration-list declaration var-declaration type-specifier fun-declaration params param-list param compound-stmt local-declarations statement-list statement expression-stmt selection-stmt iteration-stmt return-stmt expression var simple-expression relop additive-expression addop term mulop factor call args arg-list
+%type <node> program declaration-list declaration var-declaration type-specifier fun-declaration params param-list param compound-stmt local-declarations statement-list statement expression-stmt selection-stmt iteration-stmt return-stmt expression var simple-expression relop additive-expression addop term mulop factor integer float call args arg-list
 
 /* compulsory starting symbol */
 %start program
@@ -93,7 +93,7 @@ var-declaration : 	type-specifier IDENTIFIER SEMICOLON {$$ = node( "var-declarat
                 ;
 
 type-specifier 	: 	INT {$$ = node( "type-specifier", 1, $1);}
-| FLOAT { $$ = node( "type-specifier", 1, $1); }
+				| 	FLOAT { $$ = node( "type-specifier", 1, $1); }
 				| 	VOID {$$ = node( "type-specifier", 1, $1);}
 				;
 
@@ -184,8 +184,14 @@ mulop 	: 	MUL {$$ = node( "mulop", 1, $1);}
 factor 	: 	LPARENTHESE expression RPARENTHESE {$$ = node( "factor", 3, $1, $2, $3);}
 		|	var {$$ = node( "factor", 1, $1);}
 		|	call {$$ = node( "factor", 1, $1);}
-		| 	INTEGER {$$ = node( "factor", 1, $1);}
-                | FLOATPOINT {$$ = node( "factor", 1, $1);}
+		|	integer {$$ = node( "factor", 1, $1);}
+		|	float {$$ = node( "factor", 1, $1);}
+		;
+
+integer 	: 	INTEGER {$$ = node( "integer", 1, $1);}
+		;
+
+float 	: 	FLOATPOINT {$$ = node( "float", 1, $1);}
 		;
 
 call 	: 	IDENTIFIER LPARENTHESE args RPARENTHESE {$$ = node( "call", 4, $1, $2, $3, $4);}
@@ -212,15 +218,18 @@ void yyerror(const char * s)
 /// Parse input from stdin, and prints the parsing results to stdout.
 ///
 /// This function initializes essential states before running yyparse().
-void parse()
+syntax_tree *parse(const char *input_path)
 {
+    if (!(yyin = fopen(input_path, "r"))) {
+        fprintf(stderr, "[ERR] Open input file %s failed.", input_path);
+        exit(1);
+    }
+
     lines = pos_start = pos_end = 1;
     gt = new_syntax_tree();
-    if (!yyparse()) {
-        print_syntax_tree(stdout, gt);
-    }
-    del_syntax_tree(gt);
-    gt = NULL;
+    yyrestart(yyin);
+    yyparse();
+    return gt;
 }
 
 /// A helper function to quickly construct a tree node.

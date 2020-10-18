@@ -60,6 +60,8 @@ Cminus的详情请参考《编译原理与实践》第九章附录。
    - `additive-expression`
    - `term`
    - `factor`
+   - `integer`
+   - `float`
    - `call`
 5. 其他
    - `params`
@@ -97,10 +99,12 @@ Cminus的详情请参考《编译原理与实践》第九章附录。
 23. $`\text{addop} \rightarrow \textbf{+}\ |\ \textbf{-}`$
 24. $`\text{term} \rightarrow \text{term}\ \text{mulop}\ \text{factor}\ |\ \text{factor}`$
 25. $`\text{mulop} \rightarrow \textbf{*}\ |\ \textbf{/}`$
-26. $`\text{factor} \rightarrow \textbf{(}\ \text{expression}\ \textbf{)}\ |\ \text{var}\ |\ \text{call}\ |\ \textbf{INTEGER}\ |\ \textbf{FLOATPOINT}`$
-27. $`\text{call} \rightarrow \textbf{ID}\ \textbf{(}\ \text{args} \textbf{)}`$
-28. $`\text{args} \rightarrow \text{arg-list}\ |\ \text{empty}`$
-29. $`\text{arg-list} \rightarrow \text{arg-list}\ \textbf{,}\ \text{expression}\ |\ \text{expression}`$
+26. $`\text{factor} \rightarrow \textbf{(}\ \text{expression}\ \textbf{)}\ |\ \text{var}\ |\ \text{call}\ |\ \textbf{integer}\ |\ \textbf{float}`$
+27. $`\text{integer} \rightarrow \textbf{INTEGER}`$
+28. $`\text{float} \rightarrow \textbf{FLOATPOINT}`$
+29. $`\text{call} \rightarrow \textbf{ID}\ \textbf{(}\ \text{args} \textbf{)}`$
+30. $`\text{args} \rightarrow \text{arg-list}\ |\ \text{empty}`$
+31. $`\text{arg-list} \rightarrow \text{arg-list}\ \textbf{,}\ \text{expression}\ |\ \text{expression}`$
 
 ### 1.2 Bison 简介
 

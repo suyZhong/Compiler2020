@@ -17,7 +17,7 @@ for testcase in $TESTCASE_DIR/*.cminus
 do
     filename=$(basename $testcase)
     echo "[info] Analyzing $filename"
-    $BUILD_DIR/parser < $testcase > $OUTPUT_DIR/${filename%.cminus}.syntax_tree
+    $BUILD_DIR/parser $testcase > $OUTPUT_DIR/${filename%.cminus}.syntax_tree
 done
 
 # Output a summary when requested.
