@@ -1,4 +1,4 @@
 add_library(common STATIC
-  SyntaxTree.c
+  syntax_tree.c
 )
 target_link_libraries(common)

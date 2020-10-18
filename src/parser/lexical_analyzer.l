@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "SyntaxTree.h"
+#include "syntax_tree.h"
 #include "syntax_analyzer.h"
 
 int files_count;
@@ -13,7 +13,7 @@ int pos_start;
 int pos_end;
 
 void pass_node(char *text){
-     yylval.node = newSyntaxTreeNode(text);
+     yylval.node = new_syntax_tree_node(text);
 }
 
 /*****************声明和选项设置  end*****************/

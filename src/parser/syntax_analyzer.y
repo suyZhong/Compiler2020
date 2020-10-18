@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "SyntaxTree.h"
+#include "syntax_tree.h"
 
 // external functions from lex
 extern int yylex();
@@ -19,18 +19,18 @@ extern int pos_end;
 extern int pos_start;
 
 // Global syntax tree
-SyntaxTree *gt;
+syntax_tree *gt;
 
 // Error reporting
 void yyerror(const char *s);
 
 // Helper functions written for you with love
-SyntaxTreeNode *node(const char *node_name, int children_num, ...);
+syntax_tree_node *node(const char *node_name, int children_num, ...);
 %}
 
 /* TODO: Complete this definition. */
 %union {
-     struct _SyntaxTreeNode * node;
+     struct _syntax_tree_node * node;
      char * name;
 }
 
@@ -215,30 +215,30 @@ void yyerror(const char * s)
 void parse()
 {
     lines = pos_start = pos_end = 1;
-    gt = newSyntaxTree();
+    gt = new_syntax_tree();
     if (!yyparse()) {
-        printSyntaxTree(stdout, gt);
+        print_syntax_tree(stdout, gt);
     }
-    deleteSyntaxTree(gt);
+    del_syntax_tree(gt);
     gt = NULL;
 }
 
 /// A helper function to quickly construct a tree node.
 ///
 /// e.g. $$ = node("program", 1, $1);
-SyntaxTreeNode *node(const char *name, int children_num, ...)
+syntax_tree_node *node(const char *name, int children_num, ...)
 {
-    SyntaxTreeNode *p = newSyntaxTreeNode(name);
-    SyntaxTreeNode *child;
+    syntax_tree_node *p = new_syntax_tree_node(name);
+    syntax_tree_node *child;
     if (children_num == 0) {
-        child = newSyntaxTreeNode("epsilon");
-        SyntaxTreeNode_AddChild(p, child);
+        child = new_syntax_tree_node("epsilon");
+        syntax_tree_add_child(p, child);
     } else {
         va_list ap;
         va_start(ap, children_num);
         for (int i = 0; i < children_num; ++i) {
-            child = va_arg(ap, SyntaxTreeNode *);
-            SyntaxTreeNode_AddChild(p, child);
+            child = va_arg(ap, syntax_tree_node *);
+            syntax_tree_add_child(p, child);
         }
         va_end(ap);
     }
