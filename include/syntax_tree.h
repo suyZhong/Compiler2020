@@ -16,7 +16,6 @@ typedef struct _syntax_tree_node syntax_tree_node;
 
 syntax_tree_node * new_anon_syntax_tree_node();
 syntax_tree_node * new_syntax_tree_node(const char * name);
-syntax_tree_node * new_syntax_tree_node_num(const int num);
 int syntax_tree_add_child(syntax_tree_node * parent, syntax_tree_node * child);
 void del_syntax_tree_node(syntax_tree_node * node, int recursive);
 

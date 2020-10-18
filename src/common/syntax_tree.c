@@ -14,14 +14,6 @@ syntax_tree_node * new_syntax_tree_node(const char * name)
 	return new_node;
 }
 
-syntax_tree_node * new_syntax_tree_node_num(const int num)
-{
-	syntax_tree_node * new_node = new_syntax_tree_node(NULL);
-	sprintf(new_node->name, "%d", num);
-	new_node->children_num = 0;
-	return new_node;
-}
-
 int syntax_tree_add_child(syntax_tree_node * parent, syntax_tree_node * child)
 {
 	if (!parent || !child)	return -1;
