@@ -45,10 +45,9 @@ VOID   void
 WHILE  while
 /*ID和NUM*/
 IDENTIFIER [a-zA-Z][a-zA-Z_0-9]*
-INTEGER    0|[1-9][0-9]*
-DIGIT      [0-9]
-DIGITS     [0-9][0-9]*
-FLOATPOINT  [+-]?{DIGITS}\.{DIGITS}?
+INTEGER   {digit}+
+digit      [0-9]
+FLOATPOINT  ({digit}+\.|{digit}*\.{digit}+)
 ARRAY      \[]
 /*other*/
 SPACE [ ]
