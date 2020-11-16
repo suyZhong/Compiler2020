@@ -5,6 +5,7 @@ PB18111733 蒲明昱
 ## 问题1: cpp与.ll的对应
 请描述你的cpp代码片段和.ll的每个BasicBlock的对应关系。描述中请附上两者代码。
 
+对应关系分别如下，cpp的具体写法详见注释
 1. assign.c
 
 
@@ -82,6 +83,86 @@ exprRoot->numberF->exprE->numberA->exprD
 答：在思考此问题时，先对C++一些不了解的用法做了查阅，在读懂代码的基础上，即较容易找出遍历序列。
 
 exprRoot->numberF->exprE->exprD->numberB->numberA->exprC->numberA->numberB
+
+查阅相关资料，整理出不懂的概念如下;
+
+##### 引用
+
+在visitor.cpp中出现了&
+
+引用变量本质上是指针的另一个名字
+
+```c++
+void main(void) 
+{ 
+int i=3;
+f(i); 
+cout << i; 
+}
+void f(int& r) 
+{ 
+r = 2*r; 
+}
+```
+
+网上搜索的这个程序很好的体现了引用的含义，该程序输出结果为6
+
+##### 虚函数（virtual）
+
+同样是 p->fun();但结果不一样。
+
+在子类中进行改写不影响原函数
+
+示例程序如下：
+
+```c++
+class A
+{
+virual fun()
+{cout<<"a"<<endl;}
+}
+class B : public A
+{
+virual fun() //在子类中改写
+{cout<<"B"<<endl;}
+}
+class C: public A
+{
+virual fun() //在子类中改写
+{cout<<"C"<<endl;}
+}
+int main()
+{
+A * p ;
+B mb;
+C mc;
+p=&mb;
+p->fun();//输出B
+p=&mc;
+p->fun();//输出C
+return 0;
+}
+```
+
+
+
+##### 纯虚函数
+
+如果想要在基类中定义虚函数，但是在基类中又不能对虚函数给出有意义的实现，这个时候就会用到纯虚函数。
+
+```c++
+class Node {  // Parent class for the elements (AddSubNode, NumberNode and
+              // MulDivNode)
+ public:
+  // This function accepts an object of any class derived from
+  // TreeVisitor and must be implemented in all derived classes
+  virtual int accept(TreeVisitor& treeVisitor) = 0; //纯虚函数
+};
+```
+
+ `= 0` 告诉编译器，函数没有主体，上面的虚函数是**纯虚函数**。 
+
+ 还出现了一个关键字为override，也是与基类和子类对函数的定义有关的，不影响对遍历顺序的理解，故不做详细探究
 
 ## 问题3: getelementptr
 请给出`IR.md`中提到的两种getelementptr用法的区别,并稍加解释:
