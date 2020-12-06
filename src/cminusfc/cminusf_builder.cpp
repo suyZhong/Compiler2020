@@ -11,7 +11,12 @@
 
 // You can define global variables here
 // to store state
-Value *returnValue;
+Value *tmpValue;
+float tmpFloat;
+int tmpInt;
+
+//scope has some unique strings
+
 
 /*
  * use CMinusfBuilder::Scope to construct scopes
@@ -23,6 +28,7 @@ Value *returnValue;
 
 void CminusfBuilder::visit(ASTProgram &node) {
     LOG(DEBUG) << "program!";
+    //去找各个declarations
     for (auto decl : node.declarations) {
         decl->accept(*this);
     }
@@ -30,35 +36,64 @@ void CminusfBuilder::visit(ASTProgram &node) {
 
 void CminusfBuilder::visit(ASTNum &node) {
     LOG(DEBUG) << "num!";
+    bool slag = true;
     if (node.type == TYPE_INT) {
-        scope.push("intValue",CONST_INT(node.i_val));
+        LOG(DEBUG) << "push";
+        slag = scope.push("@", CONST_INT(node.i_val));
+        if (!slag) {
+            LOG(DEBUG) << "push fail!";
+        }
+        //TODO maybe set tmpFloat 0?
+        tmpInt = node.i_val;
     } else {
-        scope.push("floatValue",CONST_FP(node.f_val));
+        slag = scope.push("@", CONST_FP(node.f_val));
+        tmpFloat = node.f_val;
+        if (!slag) {
+            LOG(DEBUG) << "push fail!";
+        }
     }
     //ignore other situation
 }
 
 void CminusfBuilder::visit(ASTVarDeclaration &node) {
+    //这是变量声明；
     LOG(DEBUG) << "varDec!";
-    bool arrayFlag = false;
+    auto TyInt32 = Type::get_int32_type(module.get());
+    auto TyFloat = Type::get_float_type(module.get());
+    Type *varTy;
+    AllocaInst *varAlloca;
     if (node.num != nullptr) {
         bool arrayFLag = true;
         LOG(DEBUG) << "TODO array check";
         node.num->accept(*this);
-        int arrayLength = node.num->i_val;
-    }
-    Type *varTy;
-    if (node.type == TYPE_INT){
-        varTy = Type::get_int32_type(module.get());
+        auto arrayLengthValue = scope.find("@");
+        LOG(DEBUG) << arrayLengthValue;
+        if (!arrayLengthValue->get_type()->is_integer_type()) {
+            LOG(DEBUG) << "can rech here?";
+            auto neg = scope.find("neg_idx_except");
+            std::vector<Value *> nullParams;
+            builder->create_call(neg, nullParams);
+        } else {
+            if (node.type == TYPE_INT) {
+                varTy = ArrayType::get_array_type(TyInt32, tmpInt);
+            } else {
+                varTy = ArrayType::get_array_type(TyFloat, tmpInt);
+            }
+        }
     } else {
-        varTy = Type::get_float_type(module.get());
+        if (node.type == TYPE_INT) {
+            varTy = TyInt32;
+        } else {
+            varTy = TyFloat;
+        }
     }
-    auto varAlloca = builder->create_alloca(varTy);
+    varAlloca = builder->create_alloca(varTy);
     scope.push(node.id, varAlloca);
     LOG(DEBUG) << "is here finished?";
 }
 
 void CminusfBuilder::visit(ASTFunDeclaration &node) {
+    //这是函数声明
     LOG(DEBUG) << "funDec!";
     auto TyVoid = Type::get_void_type(module.get());
     auto TyInt32 = Type::get_int32_type(module.get());
@@ -76,20 +111,24 @@ void CminusfBuilder::visit(ASTFunDeclaration &node) {
     std::vector<Type *> funParams;
     for (auto param : node.params) {
         param->accept(*this);
-        switch (param->type) {
-        case TYPE_VOID:
-            funParams.push_back(TyVoid);
-            break;
-        case TYPE_INT:
-            funParams.push_back(TyInt32);
-            break;
-        case TYPE_FLOAT:
-            funParams.push_back(TyFloat);
-            break;
-        default:
-            break;
+        //TODO这里param遍历是干嘛？
+        if (param->isarray) {
+            funParams.push_back(Type::get_pointer_type(TyInt32));
+        } else {
+            switch (param->type) {
+            case TYPE_VOID:
+                funParams.push_back(TyVoid);
+                break;
+            case TYPE_INT:
+                funParams.push_back(TyInt32);
+                break;
+            case TYPE_FLOAT:
+                funParams.push_back(TyFloat);
+                break;
+            default:
+                break;
+            }
         }
-        // TODO 这里还要考虑是个pointer
     }
     auto funType = FunctionType::get(funTy, funParams);
     auto fun = Function::create(funType, node.id, module.get());
@@ -133,36 +172,88 @@ void CminusfBuilder::visit(ASTReturnStmt &node) {
     if (node.expression == nullptr) {
         builder->create_void_ret();
     } else {
+        scope.enter();
         node.expression->accept(*this);
-        builder->create_ret(returnValue);
+        LOG(DEBUG) << "run here????";
+        LOG(DEBUG) << scope.find("@")->get_type();
+        builder->create_ret(scope.find("@"));
+        scope.exit();
     }
 }
 
-void CminusfBuilder::visit(ASTVar &node) {}
+void CminusfBuilder::visit(ASTVar &node) {
+    Value *var;
+    Value *varAlloca;
+    varAlloca = scope.find(node.id);
+    if (!varAlloca) {
+        LOG(WARNING) << "there's no var";
+    }
+    var = builder->create_load(varAlloca);
+    scope.push("&", varAlloca);
+    scope.push("@", var);
+    tmpValue = var;
+    //TODO array
+}
 
-void CminusfBuilder::visit(ASTAssignExpression &node) {}
+void CminusfBuilder::visit(ASTAssignExpression &node) {
+    Value *varAlloca, *varValue;
+    scope.enter();
+    node.var->accept(*this);
+    varAlloca = scope.find("&");
+    scope.exit();
+    
+    scope.enter();
+    node.expression->accept(*this);
+    varValue = scope.find("@");
+    scope.exit();
+    builder->create_store(varValue, varAlloca);
+}
 
 void CminusfBuilder::visit(ASTSimpleExpression &node) {
-    if(node.additive_expression_r ==nullptr){
-        //TODO
+    if (node.additive_expression_r == nullptr) {
+        //TODO maybe
     } else {
-        //TODO relops
+        //TODO relops must
     }
     node.additive_expression_l->accept(*this);
-    if (node.additive_expression_r != nullptr)
+    if (node.additive_expression_r != nullptr) {
         node.additive_expression_r->accept(*this);
+    }
 }
 
 void CminusfBuilder::visit(ASTAdditiveExpression &node) {
+    Value *lhs;
+    Value *rhs;
+    bool opFlag = false;
     LOG(DEBUG) << "addi!";
     if (node.additive_expression == nullptr) {
-        //把里面东西全加起来 TODO
+        //把里面东西全加起来 TODO maybe
     } else {
         //TODO
+        opFlag = true;
+        if (node.op == OP_PLUS) {
+            // LOG(DEBUG) << "I need to add here";
+            // builder->create_iadd;
+        }
     }
-    if (node.additive_expression != nullptr)
+    if (node.additive_expression != nullptr) {
+        scope.enter();
         node.additive_expression->accept(*this);
+        //TODO type check
+        LOG(DEBUG) << "run here?";
+        lhs = scope.find("@");
+        scope.exit();
+    }
+    scope.enter();
     node.term->accept(*this);
+    rhs = scope.find("@");
+    scope.exit();
+    if (opFlag) {
+        auto tmp = builder->create_iadd(lhs, rhs);
+        scope.push("@", tmp);
+    } else {
+        scope.push("@", rhs);
+    }
 }
 
 void CminusfBuilder::visit(ASTTerm &node) {
@@ -181,13 +272,16 @@ void CminusfBuilder::visit(ASTCall &node) {
     LOG(DEBUG) << "call";
     std::vector<Value *> callParams;
     auto callFun = scope.find(node.id);
-    Type *callFunTy = callFun->get_type();
-    auto funTy = static_cast<FunctionType *> (callFunTy);
+
+    //这两行好像用不上
+    // Type *callFunTy = callFun->get_type();
+    // auto funTy = static_cast<FunctionType *>(callFunTy);
+    //
     //TODO complete int or float
     for (auto arg : node.args) {
         scope.enter();
         arg->accept(*this);
-        callParams.push_back(scope.find("intValue"));
+        callParams.push_back(scope.find("@"));
         scope.exit();
     }
     auto call = builder->create_call(callFun, callParams);
