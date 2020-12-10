@@ -26,6 +26,16 @@ bool retFlag = false;
 //scope has some unique strings
 
 /*
+    TODOs
+    1. typecheck in return and array index
+    2. array assign and load
+    3. while
+    4. index check (neg)
+    5. maybe some strange bugs
+
+*/
+
+/*
  * use CMinusfBuilder::Scope to construct scopes
  * scope.enter: enter a new scope
  * scope.exit: exit current scope
