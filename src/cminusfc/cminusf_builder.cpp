@@ -16,10 +16,12 @@ float tmpFloat;
 int tmpInt;
 //定义assign flag使得在assign语句取数时，不对var进行load操作
 bool assignFlag;
+//定义exprFlag 使得在加法或者乘法中的i1 变化成i32 或者 float
+int exprFlag;
 //传递param类型，（实际可能并不需要）
 Type *paramTy;
 //如果为真 代表在stmt中遇到了return语句，则ifelse不用前往nextBB
-bool retFlag = false; 
+bool retFlag = false;
 
 //scope has some unique strings
 
@@ -207,13 +209,12 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
     auto cond = scope.find("@");
     scope.exit();
     //TODO maybe the answer is not i1 ??
-    //TODO this func is totally ugly 
+    //TODO this func is totally ugly
     //i want to make it elegant
     builder->create_cond_br(cond, trueBB, falseBB);
     builder->set_insert_point(trueBB);
     node.if_statement->accept(*this);
-    if (!retFlag && node.else_statement !=nullptr)
-    {
+    if (!retFlag && node.else_statement != nullptr) {
         nextBB = BasicBlock::create(module.get(), "", fun);
         builder->create_br(nextBB);
         isNext = true;
@@ -221,7 +222,7 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
         builder->create_br(falseBB);
     }
     retFlag = false;
-        builder->set_insert_point(falseBB);
+    builder->set_insert_point(falseBB);
     if (node.else_statement != nullptr) {
         node.else_statement->accept(*this);
         if (!retFlag) {
@@ -249,8 +250,7 @@ void CminusfBuilder::visit(ASTReturnStmt &node) {
     } else {
         scope.enter();
         node.expression->accept(*this);
-        LOG(DEBUG) << "run here????";
-        LOG(DEBUG) << scope.find("@")->get_type();
+        //TODO type check
         builder->create_ret(scope.find("@"));
         scope.exit();
     }
@@ -285,8 +285,11 @@ void CminusfBuilder::visit(ASTAssignExpression &node) {
     node.expression->accept(*this);
     varValue = scope.find("@");
     scope.exit();
+    if (varValue->get_type()->is_integer_type()) {
+        if (static_cast<IntegerType *>(varValue->get_type())->get_num_bits() == 1)
+            varValue = builder->create_zext(varValue, Type::get_int32_type(module.get()));
+    }
     if (!varTy->is_float_type() && varValue->get_type()->is_float_type()) {
-        LOG(DEBUG) << "ohmyzsss";
         varValue = builder->create_fptosi(varValue, varTy);
     } else if (!varTy->is_integer_type() && varValue->get_type()->is_integer_type()) {
         varValue = builder->create_sitofp(varValue, varTy);
@@ -298,14 +301,14 @@ void CminusfBuilder::visit(ASTAssignExpression &node) {
 void CminusfBuilder::visit(ASTSimpleExpression &node) {
     Value *lhs;
     Value *rhs;
-    bool opFlag = false;
     bool isIntOp = true;
     LOG(DEBUG) << "simp expr";
     if (node.additive_expression_r == nullptr) {
         //TODO maybe
     } else {
-        //TODO relops must
+        //TODO relops
     }
+    //TODO type transer
     scope.enter();
     node.additive_expression_l->accept(*this);
     lhs = scope.find("@");
@@ -315,6 +318,30 @@ void CminusfBuilder::visit(ASTSimpleExpression &node) {
         node.additive_expression_r->accept(*this);
         rhs = scope.find("@");
         scope.exit();
+        auto lhsTy = lhs->get_type();
+        auto rhsTy = rhs->get_type();
+        if (lhsTy->is_integer_type()) {
+            if (static_cast<IntegerType *>(lhsTy)->get_num_bits() == 1) {
+                lhs = builder->create_zext(lhs, Type::get_int32_type(module.get()));
+            }
+        }
+        if (rhsTy->is_integer_type()) {
+            if (static_cast<IntegerType *>(rhsTy)->get_num_bits() == 1) {
+                rhs = builder->create_zext(rhs, Type::get_int32_type(module.get()));
+            }
+        }
+        if (lhsTy->is_float_type()) {
+            //没有考虑是不是个别的东西（比如指针加）(不需要)
+            isIntOp = false;
+            if (rhsTy->is_integer_type()) {
+                rhs = builder->create_sitofp(rhs, lhsTy);
+            }
+        } else if (rhsTy->is_float_type()) {
+            isIntOp = false;
+            if (lhsTy->is_integer_type()) { //实际上不需要判断这个
+                lhs = builder->create_sitofp(lhs, rhsTy);
+            }
+        }
         if (isIntOp) {
             CmpInst *tmp;
             switch (node.op) {
@@ -379,18 +406,10 @@ void CminusfBuilder::visit(ASTAdditiveExpression &node) {
     bool opFlag = false;
     bool isIntOp = true;
     LOG(DEBUG) << "addi!";
-    // if (node.additive_expression == nullptr) {
-    //     //nothing TODO
-    // } else {
-    //     //TODO maybe
-    //     opFlag = true;
-    // }
     if (node.additive_expression != nullptr) {
         opFlag = true;
         scope.enter();
         node.additive_expression->accept(*this);
-        //TODO type check
-        // LOG(DEBUG) << "run here?";
         lhs = scope.find("@");
         scope.exit();
     }
@@ -399,9 +418,32 @@ void CminusfBuilder::visit(ASTAdditiveExpression &node) {
     rhs = scope.find("@");
     scope.exit();
 
-    //TODO fptosi
+    //TODO zext
     if (opFlag) {
-        isIntOp = true;
+        auto lhsTy = lhs->get_type();
+        auto rhsTy = rhs->get_type();
+        if (lhsTy->is_integer_type()) {
+            if(static_cast<IntegerType *>(lhsTy)->get_num_bits() == 1){
+                lhs = builder->create_zext(lhs, Type::get_int32_type(module.get()));
+            }
+        }
+        if (rhsTy->is_integer_type()) {
+            if(static_cast<IntegerType *>(rhsTy)->get_num_bits() == 1){
+                rhs = builder->create_zext(rhs, Type::get_int32_type(module.get()));
+            }
+        }
+        if (lhsTy->is_float_type()) {
+            //没有考虑是不是个别的东西（比如指针加）(不需要)
+            isIntOp = false;
+            if (rhsTy->is_integer_type()) {
+                rhs = builder->create_sitofp(rhs, lhsTy);
+            }
+        } else if (rhsTy->is_float_type()) {
+            isIntOp = false;
+            if (lhsTy->is_integer_type()) { //实际上不需要判断这个
+                lhs = builder->create_sitofp(lhs, rhsTy);
+            }
+        }
         BinaryInst *tmp;
         if (isIntOp) {
             if (node.op == OP_PLUS)
@@ -430,6 +472,7 @@ void CminusfBuilder::visit(ASTTerm &node) {
     LOG(DEBUG) << "term!";
     Value *lhs;
     Value *rhs;
+    bool isIntOp = true;
     bool opFlag = false;
     // if (node.term == nullptr) {
     //     //TODO nothing
@@ -450,7 +493,30 @@ void CminusfBuilder::visit(ASTTerm &node) {
 
     //TODO type check
     if (opFlag) {
-        bool isIntOp = true;
+        auto lhsTy = lhs->get_type();
+        auto rhsTy = rhs->get_type();
+        if (lhsTy->is_integer_type()) {
+            if (static_cast<IntegerType *>(lhsTy)->get_num_bits() == 1) {
+                lhs = builder->create_zext(lhs, Type::get_int32_type(module.get()));
+            }
+        }
+        if (rhsTy->is_integer_type()) {
+            if (static_cast<IntegerType *>(rhsTy)->get_num_bits() == 1) {
+                rhs = builder->create_zext(rhs, Type::get_int32_type(module.get()));
+            }
+        }
+        if (lhsTy->is_float_type()) {
+            //没有考虑是不是个别的东西（比如指针加）(不需要)
+            isIntOp = false;
+            if (rhsTy->is_integer_type()) {
+                rhs = builder->create_sitofp(rhs, lhsTy);
+            }
+        } else if (rhsTy->is_float_type()) {
+            isIntOp = false;
+            if (lhsTy->is_integer_type()) { //实际上不需要判断这个
+                lhs = builder->create_sitofp(lhs, rhsTy);
+            }
+        }
         BinaryInst *tmp;
         if (isIntOp) {
             if (node.op == OP_MUL)
@@ -479,17 +545,30 @@ void CminusfBuilder::visit(ASTCall &node) {
     LOG(DEBUG) << "call";
     std::vector<Value *> callParams;
     auto callFun = scope.find(node.id);
-
+    int paramIndex = 0;
     //这两行好像用不上
-    // Type *callFunTy = callFun->get_type();
-    // auto funTy = static_cast<FunctionType *>(callFunTy);
-    //
+    FunctionType *funTy;
+    Type *callFunTy = callFun->get_type();
+    if (callFunTy->is_function_type())
+        funTy = static_cast<FunctionType *>(callFunTy);
     //TODO complete int or float
     for (auto arg : node.args) {
         scope.enter();
         arg->accept(*this);
-        callParams.push_back(scope.find("@"));
+        auto argValue = scope.find("@");
         scope.exit();
+        if(argValue->get_type()->is_integer_type()){
+            if(static_cast<IntegerType *>(argValue->get_type())->get_num_bits()==1)
+                argValue = builder->create_zext(argValue, Type::get_int32_type(module.get()));
+        }
+        auto argTy = funTy->get_param_type(paramIndex);
+        if (argTy->is_float_type() && argValue->get_type()->is_integer_type()) {
+            argValue = builder->create_sitofp(argValue, argTy);
+        } else if (argTy->is_integer_type() && argValue->get_type()->is_float_type()) {
+            argValue = builder->create_fptosi(argValue, argTy);
+        }
+        callParams.push_back(argValue);
+        paramIndex++;
     }
     LOG(DEBUG) << "setbreakpoint";
     auto call = builder->create_call(callFun, callParams);
