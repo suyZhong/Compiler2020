@@ -27,11 +27,9 @@ bool retFlag = false;
 
 /*
     TODOs
-    1. typecheck in return and array index
-    2. array assign and load
-    3. while
-    4. index check (neg)
-    5. maybe some strange bugs
+    1. typecheck in array index & neg check
+    2. while
+    3. maybe some strange bugs
 
 */
 
@@ -252,7 +250,8 @@ void CminusfBuilder::visit(ASTIterationStmt &node) {}
 void CminusfBuilder::visit(ASTReturnStmt &node) {
     LOG(DEBUG) << "ret!";
     retFlag = true;
-    // auto fun = builder->get_insert_block()->get_parent();
+    auto fun = builder->get_insert_block()->get_parent();
+    auto funRetTy = fun->get_return_type();
     // auto retBb = BasicBlock::create(module.get(), "", fun);
     // builder->set_insert_point(retBb);
     if (node.expression == nullptr) {
@@ -261,15 +260,38 @@ void CminusfBuilder::visit(ASTReturnStmt &node) {
         scope.enter();
         node.expression->accept(*this);
         //TODO type check
-        builder->create_ret(scope.find("@"));
+        auto retValue = scope.find("@");
         scope.exit();
+        if (retValue->get_type()->is_integer_type()) {
+            if (static_cast<IntegerType *>(retValue->get_type())->get_num_bits() == 1) {
+                retValue = builder->create_zext(retValue, Type::get_int32_type(module.get()));
+            }
+        }
+        if (funRetTy->is_float_type() && retValue->get_type()->is_integer_type()){
+            retValue = builder->create_sitofp(retValue, funRetTy);
+        } else if (funRetTy->is_integer_type() && retValue->get_type()->is_float_type()){
+            retValue = builder->create_fptosi(retValue, funRetTy);
+        }
+        builder->create_ret(retValue);
     }
 }
 
 void CminusfBuilder::visit(ASTVar &node) {
     Value *var;
     Value *varAlloca;
+    Value *indexValue;
     varAlloca = scope.find(node.id);
+    //add array read
+    if(node.expression != nullptr){
+        scope.enter();
+        node.expression->accept(*this);
+        indexValue = scope.find("@");
+        scope.exit();
+        std::vector<Value *> idxs;
+        idxs.push_back(CONST_INT(0));
+        idxs.push_back(indexValue);
+        varAlloca = builder->create_gep(varAlloca, idxs);
+    }
     if (!varAlloca) {
         LOG(WARNING) << "there's no var";
     }
@@ -433,12 +455,12 @@ void CminusfBuilder::visit(ASTAdditiveExpression &node) {
         auto lhsTy = lhs->get_type();
         auto rhsTy = rhs->get_type();
         if (lhsTy->is_integer_type()) {
-            if(static_cast<IntegerType *>(lhsTy)->get_num_bits() == 1){
+            if (static_cast<IntegerType *>(lhsTy)->get_num_bits() == 1) {
                 lhs = builder->create_zext(lhs, Type::get_int32_type(module.get()));
             }
         }
         if (rhsTy->is_integer_type()) {
-            if(static_cast<IntegerType *>(rhsTy)->get_num_bits() == 1){
+            if (static_cast<IntegerType *>(rhsTy)->get_num_bits() == 1) {
                 rhs = builder->create_zext(rhs, Type::get_int32_type(module.get()));
             }
         }
@@ -567,8 +589,8 @@ void CminusfBuilder::visit(ASTCall &node) {
         arg->accept(*this);
         auto argValue = scope.find("@");
         scope.exit();
-        if(argValue->get_type()->is_integer_type()){
-            if(static_cast<IntegerType *>(argValue->get_type())->get_num_bits()==1)
+        if (argValue->get_type()->is_integer_type()) {
+            if (static_cast<IntegerType *>(argValue->get_type())->get_num_bits() == 1)
                 argValue = builder->create_zext(argValue, Type::get_int32_type(module.get()));
         }
         auto argTy = funTy->get_param_type(paramIndex);
