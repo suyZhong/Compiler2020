@@ -27,6 +27,9 @@ bool retFlag = false;
 
 /*
     TODOs
+    0.  I solve all the if/else problems but find llvm dont do the same
+        !!!!!!!!!!!!maybe need to add retBB!!!!!!!!!
+        !!!!!!!!!!!!TODO reconstruct this !!!!!!!!!
     1. typecheck in array index & neg check
     2. while
     3. maybe some strange bugs
@@ -209,6 +212,7 @@ void CminusfBuilder::visit(ASTCompoundStmt &node) {
     for (auto stmt : node.statement_list) {
         stmt->accept(*this);
     }
+    //reconTODO: add ret here
 }
 
 void CminusfBuilder::visit(ASTExpressionStmt &node) {
@@ -220,6 +224,7 @@ void CminusfBuilder::visit(ASTExpressionStmt &node) {
 
 void CminusfBuilder::visit(ASTSelectionStmt &node) {
     bool isNext = false;
+    retFlag = false;
     auto fun = builder->get_insert_block()->get_parent();
     auto trueBB = BasicBlock::create(module.get(), "", fun);
     auto falseBB = BasicBlock::create(module.get(), "", fun);
@@ -231,18 +236,29 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
     //TODO maybe the answer is not i1 ??
     //TODO this func is totally ugly
     //i want to make it elegant
+    //type check
+    auto condTy = cond->get_type();
+    if (condTy->is_float_type()) {
+        cond = builder->create_fcmp_gt(cond, ConstantZero::get(Type::get_float_type(module.get()), module.get()));
+    } else if (condTy->is_integer_type()) {
+        if (static_cast<IntegerType *>(condTy)->get_num_bits() != 1) {
+            cond = builder->create_icmp_gt(cond, ConstantZero::get(Type::get_int32_type(module.get()), module.get()));
+        }
+    }
     builder->create_cond_br(cond, trueBB, falseBB);
     builder->set_insert_point(trueBB);
     node.if_statement->accept(*this);
-    if (!retFlag && node.else_statement != nullptr) {
-        nextBB = BasicBlock::create(module.get(), "", fun);
-        builder->create_br(nextBB);
-        isNext = true;
-    } else if (node.else_statement == nullptr) {
-        builder->create_br(falseBB);
-    }
-    retFlag = false;
+    if (!retFlag) {
+        if (node.else_statement != nullptr) {
+            nextBB = BasicBlock::create(module.get(), "", fun);
+            builder->create_br(nextBB);
+            isNext = true;
+        } else {
+            builder->create_br(falseBB);
+        }
+    } 
     builder->set_insert_point(falseBB);
+    retFlag = false;
     if (node.else_statement != nullptr) {
         node.else_statement->accept(*this);
         if (!retFlag) {
@@ -252,9 +268,10 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
             isNext = true;
         }
     }
-    retFlag = false;
-    if (isNext)
+    if (isNext) {
+        retFlag = false;
         builder->set_insert_point(nextBB);
+    }
 }
 
 void CminusfBuilder::visit(ASTIterationStmt &node) {}
