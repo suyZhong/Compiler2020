@@ -34,6 +34,12 @@ bool retFlag = false;
 */
 
 /*
+    Some Questions:
+    1. void函数若有返回值，需要报错还是无视
+    2. 
+*/
+
+/*
  * use CMinusfBuilder::Scope to construct scopes
  * scope.enter: enter a new scope
  * scope.exit: exit current scope
@@ -102,8 +108,14 @@ void CminusfBuilder::visit(ASTVarDeclaration &node) {
             varTy = TyFloat;
         }
     }
-    varAlloca = builder->create_alloca(varTy);
-    scope.push(node.id, varAlloca);
+    LOG(DEBUG) << "idk what happen";
+    LOG(DEBUG) << scope.in_global();
+    if (scope.in_global()) {
+        scope.push(node.id, GlobalVariable::create(node.id, module.get(), varTy, false, ConstantZero::get(varTy, module.get())));
+    } else {
+        varAlloca = builder->create_alloca(varTy);
+        scope.push(node.id, varAlloca);
+    }
     LOG(DEBUG) << "is here finished?";
 }
 
@@ -254,7 +266,7 @@ void CminusfBuilder::visit(ASTReturnStmt &node) {
     auto funRetTy = fun->get_return_type();
     // auto retBb = BasicBlock::create(module.get(), "", fun);
     // builder->set_insert_point(retBb);
-    if (node.expression == nullptr) {
+    if (node.expression == nullptr || funRetTy->is_void_type()) {
         builder->create_void_ret();
     } else {
         scope.enter();
@@ -267,9 +279,9 @@ void CminusfBuilder::visit(ASTReturnStmt &node) {
                 retValue = builder->create_zext(retValue, Type::get_int32_type(module.get()));
             }
         }
-        if (funRetTy->is_float_type() && retValue->get_type()->is_integer_type()){
+        if (funRetTy->is_float_type() && retValue->get_type()->is_integer_type()) {
             retValue = builder->create_sitofp(retValue, funRetTy);
-        } else if (funRetTy->is_integer_type() && retValue->get_type()->is_float_type()){
+        } else if (funRetTy->is_integer_type() && retValue->get_type()->is_float_type()) {
             retValue = builder->create_fptosi(retValue, funRetTy);
         }
         builder->create_ret(retValue);
@@ -282,7 +294,7 @@ void CminusfBuilder::visit(ASTVar &node) {
     Value *indexValue;
     varAlloca = scope.find(node.id);
     //add array read
-    if(node.expression != nullptr){
+    if (node.expression != nullptr) {
         scope.enter();
         node.expression->accept(*this);
         indexValue = scope.find("@");
