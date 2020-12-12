@@ -16,15 +16,13 @@ float tmpFloat;
 int tmpInt;
 //定义assign flag使得在assign语句取数时，不对var进行load操作
 bool assignFlag;
-//定义exprFlag 使得在加法或者乘法中的i1 变化成i32 或者 float
-int exprFlag;
 //传递param类型，（实际可能并不需要）
 Type *paramTy;
 //如果为真 代表在stmt中遇到了return语句，则ifelse不用前往nextBB
 bool retFlag = false;
 
 bool negFlag = false;
-BasicBlock *negBB;
+// BasicBlock *negBB;
 
 //scope has some unique strings
 
@@ -188,6 +186,10 @@ void CminusfBuilder::visit(ASTFunDeclaration &node) {
     }
 
     node.compound_stmt->accept(*this);
+    // negBB = BasicBlock::create(module.get(), "negBB", fun);
+    // builder->set_insert_point(negBB);
+    // builder->create_call(scope.find("neg_idx_except"), {});
+    // builder->create_void_ret();
     scope.exit();
 }
 
@@ -280,7 +282,33 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
     }
 }
 
-void CminusfBuilder::visit(ASTIterationStmt &node) {}
+void CminusfBuilder::visit(ASTIterationStmt &node) {
+    retFlag = false;
+    auto fun = builder->get_insert_block()->get_parent();
+    auto flagBB = BasicBlock::create(module.get(), "", fun);
+    auto bodyBB = BasicBlock::create(module.get(), "", fun);
+    auto nextBB = BasicBlock::create(module.get(), "", fun);
+    builder->create_br(flagBB);
+    builder->set_insert_point(flagBB);
+    scope.enter();
+    node.expression->accept(*this);
+    auto cond = scope.find("@");
+    scope.exit();
+    auto condTy = cond->get_type();
+    if (condTy->is_float_type()) {
+        cond = builder->create_fcmp_gt(cond, ConstantZero::get(Type::get_float_type(module.get()), module.get()));
+    } else if (condTy->is_integer_type()) {
+        if (static_cast<IntegerType *>(condTy)->get_num_bits() != 1) {
+            cond = builder->create_icmp_gt(cond, ConstantZero::get(Type::get_int32_type(module.get()), module.get()));
+        }
+    }
+    builder->create_cond_br(cond, bodyBB, nextBB);
+    builder->set_insert_point(bodyBB);
+    node.statement->accept(*this);
+    if (!retFlag)
+        builder->create_br(flagBB);
+    builder->set_insert_point(nextBB);
+}
 
 void CminusfBuilder::visit(ASTReturnStmt &node) {
     LOG(DEBUG) << "ret!";
@@ -324,7 +352,7 @@ void CminusfBuilder::visit(ASTVar &node) {
         indexValue = scope.find("@");
         scope.exit();
         std::vector<Value *> idxs;
-        //TODO arrray
+        //TODO opt
         if (indexValue->get_type()->is_integer_type()) {
             if (static_cast<IntegerType *>(indexValue->get_type())->get_num_bits() == 1)
                 indexValue = builder->create_zext(indexValue, Type::get_int32_type(module.get()));
@@ -332,6 +360,15 @@ void CminusfBuilder::visit(ASTVar &node) {
         if (indexValue->get_type()->is_float_type()) {
             indexValue = builder->create_fptosi(indexValue, Type::get_int32_type(module.get()));
         }
+        auto fun = builder->get_insert_block()->get_parent();
+        auto negBB = BasicBlock::create(module.get(), "", fun);
+        auto nextBB = BasicBlock::create(module.get(), "", fun);
+        auto negCond = builder->create_icmp_lt(indexValue, ConstantZero::get(Type::get_int32_type(module.get()), module.get()));
+        builder->create_cond_br(negCond, negBB, nextBB);
+        builder->set_insert_point(negBB);
+        builder->create_call(scope.find("neg_idx_except"), {});
+        builder->create_br(nextBB);
+        builder->set_insert_point(nextBB);
         if (varAllocaTy->get_pointer_element_type()->is_array_type()) {
             idxs.push_back(ConstantZero::get(Type::get_int32_type(module.get()), module.get()));
             idxs.push_back(indexValue);
