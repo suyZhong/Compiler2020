@@ -231,6 +231,7 @@ void CminusfBuilder::visit(ASTExpressionStmt &node) {
 }
 
 void CminusfBuilder::visit(ASTSelectionStmt &node) {
+    LOG_DEBUG << "if!";
     bool isNext = false;
     retFlag = false;
     auto fun = builder->get_insert_block()->get_parent();
@@ -283,6 +284,7 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
 }
 
 void CminusfBuilder::visit(ASTIterationStmt &node) {
+    LOG_DEBUG << "while!";
     retFlag = false;
     auto fun = builder->get_insert_block()->get_parent();
     auto flagBB = BasicBlock::create(module.get(), "", fun);
@@ -343,13 +345,18 @@ void CminusfBuilder::visit(ASTVar &node) {
     Value *var;
     Value *varAlloca;
     Value *indexValue;
+    bool assignIndexFlag = assignFlag;//对数组assign语句中若有var，作为记录
     varAlloca = scope.find(node.id);
     auto varAllocaTy = varAlloca->get_type();
     //add array read
+    LOG_DEBUG << "var";
     if (node.expression != nullptr) {
         scope.enter();
+        assignFlag = false;
         node.expression->accept(*this);
+        assignFlag = assignIndexFlag;
         indexValue = scope.find("@");
+        LOG_ERROR << indexValue->get_name();
         scope.exit();
         std::vector<Value *> idxs;
         //TODO opt
@@ -363,7 +370,10 @@ void CminusfBuilder::visit(ASTVar &node) {
         auto fun = builder->get_insert_block()->get_parent();
         auto negBB = BasicBlock::create(module.get(), "", fun);
         auto nextBB = BasicBlock::create(module.get(), "", fun);
+        LOG_DEBUG << "wtf here";
+        LOG_DEBUG << indexValue->get_name();
         auto negCond = builder->create_icmp_lt(indexValue, ConstantZero::get(Type::get_int32_type(module.get()), module.get()));
+        LOG_DEBUG << indexValue->get_name();
         builder->create_cond_br(negCond, negBB, nextBB);
         builder->set_insert_point(negBB);
         builder->create_call(scope.find("neg_idx_except"), {});
@@ -387,8 +397,10 @@ void CminusfBuilder::visit(ASTVar &node) {
             idxs.push_back(Czero);
             idxs.push_back(Czero);
             var = builder->create_gep(varAlloca, idxs);
-        } else
+        } else {
+            LOG_DEBUG << "is here?";
             var = builder->create_load(varAlloca);
+        }
     }
     scope.push("&", varAlloca);
     scope.push("@", var);
