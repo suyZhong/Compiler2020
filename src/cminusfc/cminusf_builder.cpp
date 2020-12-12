@@ -23,6 +23,9 @@ Type *paramTy;
 //如果为真 代表在stmt中遇到了return语句，则ifelse不用前往nextBB
 bool retFlag = false;
 
+bool negFlag = false;
+BasicBlock *negBB;
+
 //scope has some unique strings
 
 /*
@@ -88,7 +91,6 @@ void CminusfBuilder::visit(ASTVarDeclaration &node) {
     AllocaInst *varAlloca;
     if (node.num != nullptr) {
         bool arrayFLag = true;
-        LOG(DEBUG) << "TODO array check";
         node.num->accept(*this);
         auto arrayLengthValue = scope.find("@");
         LOG(DEBUG) << arrayLengthValue;
@@ -111,7 +113,6 @@ void CminusfBuilder::visit(ASTVarDeclaration &node) {
             varTy = TyFloat;
         }
     }
-    LOG(DEBUG) << "idk what happen";
     LOG(DEBUG) << scope.in_global();
     if (scope.in_global()) {
         scope.push(node.id, GlobalVariable::create(node.id, module.get(), varTy, false, ConstantZero::get(varTy, module.get())));
@@ -145,6 +146,7 @@ void CminusfBuilder::visit(ASTFunDeclaration &node) {
         // funParams.push_back(paramTy);
         //TODO array pointer
         if (param->isarray) {
+            LOG(DEBUG) << param->id;
             if (param->type == TYPE_INT)
                 funParams.push_back(Type::get_int32_ptr_type(module.get()));
             else {
@@ -177,7 +179,11 @@ void CminusfBuilder::visit(ASTFunDeclaration &node) {
     }
     for (auto param : node.params) {
         param->accept(*this);
-        builder->create_store(args[paraNum], scope.find(param->id));
+        if (!param->isarray)
+            builder->create_store(args[paraNum], scope.find(param->id));
+        else {
+            scope.push(param->id, args[paraNum]);
+        }
         paraNum++;
     }
 
@@ -197,8 +203,8 @@ void CminusfBuilder::visit(ASTParam &node) {
             paramTy = Type::get_int32_type(module.get());
         else if (node.type == TYPE_FLOAT)
             paramTy = Type::get_float_type(module.get());
+        scope.push(node.id, builder->create_alloca(paramTy));
     }
-    scope.push(node.id, builder->create_alloca(paramTy));
     //TODO array
 }
 
@@ -256,7 +262,7 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
         } else {
             builder->create_br(falseBB);
         }
-    } 
+    }
     builder->set_insert_point(falseBB);
     retFlag = false;
     if (node.else_statement != nullptr) {
@@ -310,6 +316,7 @@ void CminusfBuilder::visit(ASTVar &node) {
     Value *varAlloca;
     Value *indexValue;
     varAlloca = scope.find(node.id);
+    auto varAllocaTy = varAlloca->get_type();
     //add array read
     if (node.expression != nullptr) {
         scope.enter();
@@ -317,15 +324,34 @@ void CminusfBuilder::visit(ASTVar &node) {
         indexValue = scope.find("@");
         scope.exit();
         std::vector<Value *> idxs;
-        idxs.push_back(CONST_INT(0));
-        idxs.push_back(indexValue);
+        //TODO arrray
+        if (indexValue->get_type()->is_integer_type()) {
+            if (static_cast<IntegerType *>(indexValue->get_type())->get_num_bits() == 1)
+                indexValue = builder->create_zext(indexValue, Type::get_int32_type(module.get()));
+        }
+        if (indexValue->get_type()->is_float_type()) {
+            indexValue = builder->create_fptosi(indexValue, Type::get_int32_type(module.get()));
+        }
+        if (varAllocaTy->get_pointer_element_type()->is_array_type()) {
+            idxs.push_back(ConstantZero::get(Type::get_int32_type(module.get()), module.get()));
+            idxs.push_back(indexValue);
+        } else {
+            idxs.push_back(indexValue);
+        }
         varAlloca = builder->create_gep(varAlloca, idxs);
     }
     if (!varAlloca) {
         LOG(WARNING) << "there's no var";
     }
     if (!assignFlag) {
-        var = builder->create_load(varAlloca);
+        if (varAllocaTy->get_pointer_element_type()->is_array_type() && node.expression == nullptr) {
+            auto Czero = ConstantZero::get(Type::get_int32_type(module.get()), module.get());
+            std::vector<Value *> idxs;
+            idxs.push_back(Czero);
+            idxs.push_back(Czero);
+            var = builder->create_gep(varAlloca, idxs);
+        } else
+            var = builder->create_load(varAlloca);
     }
     scope.push("&", varAlloca);
     scope.push("@", var);
@@ -530,7 +556,7 @@ void CminusfBuilder::visit(ASTAdditiveExpression &node) {
 }
 
 void CminusfBuilder::visit(ASTTerm &node) {
-    LOG(DEBUG) << "term!";
+    // LOG(DEBUG) << "term!";
     Value *lhs;
     Value *rhs;
     bool isIntOp = true;
@@ -617,21 +643,27 @@ void CminusfBuilder::visit(ASTCall &node) {
         scope.enter();
         arg->accept(*this);
         auto argValue = scope.find("@");
+        Value *callValue = argValue;
         scope.exit();
         if (argValue->get_type()->is_integer_type()) {
             if (static_cast<IntegerType *>(argValue->get_type())->get_num_bits() == 1)
-                argValue = builder->create_zext(argValue, Type::get_int32_type(module.get()));
+                callValue = builder->create_zext(argValue, Type::get_int32_type(module.get()));
         }
         auto argTy = funTy->get_param_type(paramIndex);
         if (argTy->is_float_type() && argValue->get_type()->is_integer_type()) {
-            argValue = builder->create_sitofp(argValue, argTy);
+            callValue = builder->create_sitofp(argValue, argTy);
         } else if (argTy->is_integer_type() && argValue->get_type()->is_float_type()) {
-            argValue = builder->create_fptosi(argValue, argTy);
+            callValue = builder->create_fptosi(argValue, argTy);
+        } else if (argTy->is_pointer_type() && argValue->get_type()->is_array_type()) {
+            // auto Czero = ConstantZero::get(Type::get_int32_type(module.get()), module.get());
+            // std::vector<Value *> idxs;
+            // idxs.push_back(Czero);
+            // idxs.push_back(Czero);
+            // callValue = builder->create_gep(argValue, idxs);
         }
-        callParams.push_back(argValue);
+        callParams.push_back(callValue);
         paramIndex++;
     }
-    LOG(DEBUG) << "setbreakpoint";
     auto call = builder->create_call(callFun, callParams);
     scope.push("@", call);
 }
