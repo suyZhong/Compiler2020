@@ -177,11 +177,12 @@ void CminusfBuilder::visit(ASTFunDeclaration &node) {
     }
     for (auto param : node.params) {
         param->accept(*this);
-        if (!param->isarray)
-            builder->create_store(args[paraNum], scope.find(param->id));
-        else {
-            scope.push(param->id, args[paraNum]);
-        }
+        // if (!param->isarray)
+        //     builder->create_store(args[paraNum], scope.find(param->id));
+        // else {
+        //     scope.push(param->id, args[paraNum]);
+        // }
+        builder->create_store(args[paraNum], scope.find(param->id));
         paraNum++;
     }
 
@@ -205,8 +206,8 @@ void CminusfBuilder::visit(ASTParam &node) {
             paramTy = Type::get_int32_type(module.get());
         else if (node.type == TYPE_FLOAT)
             paramTy = Type::get_float_type(module.get());
-        scope.push(node.id, builder->create_alloca(paramTy));
     }
+    scope.push(node.id, builder->create_alloca(paramTy));
     //TODO array
 }
 
@@ -231,6 +232,7 @@ void CminusfBuilder::visit(ASTExpressionStmt &node) {
 }
 
 void CminusfBuilder::visit(ASTSelectionStmt &node) {
+    LOG_DEBUG << "if!";
     bool isNext = false;
     retFlag = false;
     auto fun = builder->get_insert_block()->get_parent();
@@ -283,6 +285,7 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
 }
 
 void CminusfBuilder::visit(ASTIterationStmt &node) {
+    LOG_DEBUG << "while!";
     retFlag = false;
     auto fun = builder->get_insert_block()->get_parent();
     auto flagBB = BasicBlock::create(module.get(), "", fun);
@@ -340,16 +343,23 @@ void CminusfBuilder::visit(ASTReturnStmt &node) {
 }
 
 void CminusfBuilder::visit(ASTVar &node) {
+    bool isPPtr = false;
     Value *var;
     Value *varAlloca;
     Value *indexValue;
+    bool assignIndexFlag = assignFlag;//对数组assign语句中若有var，作为记录
     varAlloca = scope.find(node.id);
+    isPPtr = varAlloca->get_type()->get_pointer_element_type()->is_pointer_type();
     auto varAllocaTy = varAlloca->get_type();
     //add array read
+    LOG_DEBUG << "var";
     if (node.expression != nullptr) {
         scope.enter();
+        assignFlag = false;
         node.expression->accept(*this);
+        assignFlag = assignIndexFlag;
         indexValue = scope.find("@");
+        LOG_ERROR << indexValue->get_name();
         scope.exit();
         std::vector<Value *> idxs;
         //TODO opt
@@ -363,7 +373,10 @@ void CminusfBuilder::visit(ASTVar &node) {
         auto fun = builder->get_insert_block()->get_parent();
         auto negBB = BasicBlock::create(module.get(), "", fun);
         auto nextBB = BasicBlock::create(module.get(), "", fun);
+        LOG_DEBUG << "wtf here";
+        LOG_DEBUG << indexValue->get_name();
         auto negCond = builder->create_icmp_lt(indexValue, ConstantZero::get(Type::get_int32_type(module.get()), module.get()));
+        LOG_DEBUG << indexValue->get_name();
         builder->create_cond_br(negCond, negBB, nextBB);
         builder->set_insert_point(negBB);
         builder->create_call(scope.find("neg_idx_except"), {});
@@ -374,6 +387,9 @@ void CminusfBuilder::visit(ASTVar &node) {
             idxs.push_back(indexValue);
         } else {
             idxs.push_back(indexValue);
+        }
+        if(isPPtr){
+            varAlloca = builder->create_load(varAlloca);
         }
         varAlloca = builder->create_gep(varAlloca, idxs);
     }
@@ -387,8 +403,10 @@ void CminusfBuilder::visit(ASTVar &node) {
             idxs.push_back(Czero);
             idxs.push_back(Czero);
             var = builder->create_gep(varAlloca, idxs);
-        } else
+        } else {
+            LOG_DEBUG << "is here?";
             var = builder->create_load(varAlloca);
+        }
     }
     scope.push("&", varAlloca);
     scope.push("@", var);
