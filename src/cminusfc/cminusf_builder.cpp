@@ -29,15 +29,13 @@ int brDepth = 0;
     0.  I solve all the if/else problems but find llvm dont do the same
         !!!!!!!!!!!!maybe need to add retBB!!!!!!!!!
         !!!!!!!!!!!!TODO reconstruct this !!!!!!!!!
-    1. typecheck in array index & neg check
-    2. while
-    3. maybe some strange bugs
+        nope, I just add brDepth
 
 */
 
 /*
     Some Questions:
-    1. void函数若有返回值，需要报错还是无视
+    1. void函数若有返回值，需要报错还是无视- 我无视了
     2. 
 */
 
@@ -297,6 +295,7 @@ void CminusfBuilder::visit(ASTIterationStmt &node) {
     auto nextBB = BasicBlock::create(module.get(), "", fun);
     builder->create_br(flagBB);
     builder->set_insert_point(flagBB);
+    brDepth += 1;
     scope.enter();
     node.expression->accept(*this);
     auto cond = scope.find("@");
@@ -312,9 +311,12 @@ void CminusfBuilder::visit(ASTIterationStmt &node) {
     builder->create_cond_br(cond, bodyBB, nextBB);
     builder->set_insert_point(bodyBB);
     node.statement->accept(*this);
-    if (!retFlag)
+    if (!retFlag){
+        brDepth -= 1;
         builder->create_br(flagBB);
+    }
     builder->set_insert_point(nextBB);
+    retFlag = false;
 }
 
 void CminusfBuilder::visit(ASTReturnStmt &node) {
@@ -443,6 +445,7 @@ void CminusfBuilder::visit(ASTAssignExpression &node) {
     }
 
     builder->create_store(varValue, varAlloca);
+    scope.push("@", varValue);
 }
 
 void CminusfBuilder::visit(ASTSimpleExpression &node) {
