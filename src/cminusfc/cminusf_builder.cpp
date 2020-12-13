@@ -21,9 +21,7 @@ Type *paramTy;
 //如果为真 代表在stmt中遇到了return语句，则ifelse不用前往nextBB
 bool retFlag = false;
 
-bool negFlag = false;
-// BasicBlock *negBB;
-
+int brDepth = 0;
 //scope has some unique strings
 
 /*
@@ -185,7 +183,7 @@ void CminusfBuilder::visit(ASTFunDeclaration &node) {
         builder->create_store(args[paraNum], scope.find(param->id));
         paraNum++;
     }
-
+    brDepth = 1;
     node.compound_stmt->accept(*this);
     // negBB = BasicBlock::create(module.get(), "negBB", fun);
     // builder->set_insert_point(negBB);
@@ -220,6 +218,8 @@ void CminusfBuilder::visit(ASTCompoundStmt &node) {
     }
     for (auto stmt : node.statement_list) {
         stmt->accept(*this);
+        if(brDepth==0)
+            break;
     }
     //reconTODO: add ret here
 }
@@ -257,6 +257,8 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
     }
     builder->create_cond_br(cond, trueBB, falseBB);
     builder->set_insert_point(trueBB);
+    LOG_INFO << brDepth;
+    brDepth += 1;
     node.if_statement->accept(*this);
     if (!retFlag) {
         if (node.else_statement != nullptr) {
@@ -265,6 +267,7 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
             isNext = true;
         } else {
             builder->create_br(falseBB);
+            brDepth -= 1;
         }
     }
     builder->set_insert_point(falseBB);
@@ -276,6 +279,7 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
                 nextBB = BasicBlock::create(module.get(), "", fun);
             builder->create_br(nextBB);
             isNext = true;
+            brDepth -= 1;
         }
     }
     if (isNext) {
@@ -340,6 +344,7 @@ void CminusfBuilder::visit(ASTReturnStmt &node) {
         }
         builder->create_ret(retValue);
     }
+    brDepth -= 1;
 }
 
 void CminusfBuilder::visit(ASTVar &node) {
