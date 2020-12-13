@@ -177,11 +177,12 @@ void CminusfBuilder::visit(ASTFunDeclaration &node) {
     }
     for (auto param : node.params) {
         param->accept(*this);
-        if (!param->isarray)
-            builder->create_store(args[paraNum], scope.find(param->id));
-        else {
-            scope.push(param->id, args[paraNum]);
-        }
+        // if (!param->isarray)
+        //     builder->create_store(args[paraNum], scope.find(param->id));
+        // else {
+        //     scope.push(param->id, args[paraNum]);
+        // }
+        builder->create_store(args[paraNum], scope.find(param->id));
         paraNum++;
     }
 
@@ -205,8 +206,8 @@ void CminusfBuilder::visit(ASTParam &node) {
             paramTy = Type::get_int32_type(module.get());
         else if (node.type == TYPE_FLOAT)
             paramTy = Type::get_float_type(module.get());
-        scope.push(node.id, builder->create_alloca(paramTy));
     }
+    scope.push(node.id, builder->create_alloca(paramTy));
     //TODO array
 }
 
@@ -342,11 +343,13 @@ void CminusfBuilder::visit(ASTReturnStmt &node) {
 }
 
 void CminusfBuilder::visit(ASTVar &node) {
+    bool isPPtr = false;
     Value *var;
     Value *varAlloca;
     Value *indexValue;
     bool assignIndexFlag = assignFlag;//对数组assign语句中若有var，作为记录
     varAlloca = scope.find(node.id);
+    isPPtr = varAlloca->get_type()->get_pointer_element_type()->is_pointer_type();
     auto varAllocaTy = varAlloca->get_type();
     //add array read
     LOG_DEBUG << "var";
@@ -384,6 +387,9 @@ void CminusfBuilder::visit(ASTVar &node) {
             idxs.push_back(indexValue);
         } else {
             idxs.push_back(indexValue);
+        }
+        if(isPPtr){
+            varAlloca = builder->create_load(varAlloca);
         }
         varAlloca = builder->create_gep(varAlloca, idxs);
     }
