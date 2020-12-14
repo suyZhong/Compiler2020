@@ -17,7 +17,6 @@
 - 细心考虑各个地方的类型转换问题
 - if/else 中出现return时，对基本块的处理
 - 如何正确处理函数调用，函数定义，取值等各个地方的数组（指针）
-- 
 
 ## 实验设计
 
@@ -37,18 +36,21 @@
    - 在assign，return，call，expr中出现传入类型与所需要类型不一致时，进行类型转换，具体是首先判断是否是i1，如果是则直接转化为i32（因为cminusf不接受i1运算，也没有发现i1直接转换成float的方法）；然后在assign, return, call中，若所需类型与传入类型不一致，则强制将传入类型转化为所需类型；在expr中，只要某一个操作数为float，则将另一个数转化为float。在下标运算中，则结果无论如何都强制转化为i32。注意在if和while的cond_br中，考虑到有可能出现expr值不为i1，则加一个判断，若不为i1则和0比较，比零大则为真，反之为假。
 3. 如何降低生成 IR 中的冗余
    - 降低访问var时的冗余：在本程序设计中，访问var时需要对数据进行load并返回，但在assign表达式里，对左值的操作并不需要load，因此在访问这个结点时，使用assignFlag对其进行标记。在var中，若assignFlag为假，才进行create_load操作；同时考虑到在数组赋值时，具有特殊性，下标并不是一个左值，这里需要load，于是又采用一个标记assignIndexFlag对其进行缓存，在此时访问expr时，先将assignFlag置为false，访问完以后，再取回原来的assignFlag值。
-   - 降低多余的return的冗余：因为如果出现了if/else里都有return的情况，实际上接下来的所有bb都是不需要的。这里维护一个brDepth进行判断，并在compound-stmt迭代访问stmt时，若brDepth为比迭代之前小，则直接跳出迭代过程，这样就降低了冗余与错误。具体解释如下
+   - 降低return后多余的return及代码的冗余：因为如果出现了if/else里都有return的情况，实际上接下来的所有stmt都是不需要的。这里维护一个brDepth进行判断，并在compound-stmt迭代访问stmt时，若brDepth为比迭代之前小，则直接跳出迭代过程，这样就降低了冗余与错误。具体解释如下
      - 每当访问一个selection-stmt或iteration-stmt时，brDepth++，每遇到一个return-stmt时brDepth--，若一个if-stmt没有返回值也没有else-stmt，brDepth--；若一个if-stmt没有完全return，且else-stmt没有return-stmt时，brDepth--。
+     - 这么做是为了保证在一个正常if/else（即至多只有一个分支里有return）或while结束后，brDepth回到进入stmt之前的状态。
 4. ...
 
 
 ### 实验总结
 
-学习了各种cpp语法，对访问者模式有了深刻的认识。也在人脑遍历语法树的同时，对cminusf语法掌握得更加深入。
+- 学习了各种cpp语法，对访问者模式有了深刻的认识。也在人脑遍历语法树的同时，对cminusf语法掌握得更加深入。
+- 需要注意严格根据语义进行类型检查与转换。
+- 需要学会仔细阅读开发者文档的能力，去很快的了解头文件以及demo是很有助于快速上手的
 
 ### 实验反馈 （可选 不会评分）
 
-对本次实验的建议
+- 感觉上手时有些困难，看着那么多文档以及头文件，容易找不准切入点
 
 ### 组间交流 （可选）
 
