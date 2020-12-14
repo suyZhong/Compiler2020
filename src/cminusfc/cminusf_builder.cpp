@@ -16,8 +16,6 @@ float tmpFloat;
 int tmpInt;
 //定义assign flag使得在assign语句取数时，不对var进行load操作
 bool assignFlag;
-//传递param类型，（实际可能并不需要）
-Type *paramTy;
 //如果为真 代表在stmt中遇到了return语句，则ifelse不用前往nextBB
 bool retFlag = false;
 
@@ -192,6 +190,7 @@ void CminusfBuilder::visit(ASTFunDeclaration &node) {
 
 void CminusfBuilder::visit(ASTParam &node) {
     LOG(DEBUG) << "param";
+    Type *paramTy;
     if (node.isarray) {
         if (node.type == TYPE_INT) {
             paramTy = Type::get_int32_ptr_type(module.get());
@@ -211,12 +210,13 @@ void CminusfBuilder::visit(ASTCompoundStmt &node) {
     LOG(DEBUG) << "compstmt!";
     //把scope放到了funDeclar里面
     //TODO 在这里要加个bb？
+    int tmpDepth = brDepth;
     for (auto decl : node.local_declarations) {
         decl->accept(*this);
     }
     for (auto stmt : node.statement_list) {
         stmt->accept(*this);
-        if(brDepth==0)
+        if (brDepth == tmpDepth - 1)
             break;
     }
     //reconTODO: add ret here
@@ -268,6 +268,7 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
             brDepth -= 1;
         }
     }
+    LOG_INFO << brDepth;
     builder->set_insert_point(falseBB);
     retFlag = false;
     if (node.else_statement != nullptr) {
@@ -275,9 +276,10 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
         if (!retFlag) {
             if (!isNext)
                 nextBB = BasicBlock::create(module.get(), "", fun);
+            else
+                brDepth -= 1;
             builder->create_br(nextBB);
             isNext = true;
-            brDepth -= 1;
         }
     }
     if (isNext) {
@@ -311,7 +313,7 @@ void CminusfBuilder::visit(ASTIterationStmt &node) {
     builder->create_cond_br(cond, bodyBB, nextBB);
     builder->set_insert_point(bodyBB);
     node.statement->accept(*this);
-    if (!retFlag){
+    if (!retFlag) {
         brDepth -= 1;
         builder->create_br(flagBB);
     }
@@ -354,7 +356,7 @@ void CminusfBuilder::visit(ASTVar &node) {
     Value *var;
     Value *varAlloca;
     Value *indexValue;
-    bool assignIndexFlag = assignFlag;//对数组assign语句中若有var，作为记录
+    bool assignIndexFlag = assignFlag; //对数组assign语句中若有var，作为记录
     varAlloca = scope.find(node.id);
     isPPtr = varAlloca->get_type()->get_pointer_element_type()->is_pointer_type();
     auto varAllocaTy = varAlloca->get_type();
@@ -395,7 +397,7 @@ void CminusfBuilder::visit(ASTVar &node) {
         } else {
             idxs.push_back(indexValue);
         }
-        if(isPPtr){
+        if (isPPtr) {
             varAlloca = builder->create_load(varAlloca);
         }
         varAlloca = builder->create_gep(varAlloca, idxs);

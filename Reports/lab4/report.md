@@ -25,19 +25,26 @@
 可能的阐述方向有:
 
 1. 如何设计全局变量
-   - 本次实验对变量的存取基本没有使用全局变量，而是在每次遍历时，创建一个新的scope，使用"@"存放可能的返回值，使用"&"存放返回地址。
-   - 使用tmpInt存放可能要用的int值，这个在varDeclaration创建数组中使用，在对num结点遍历后，使用Arraytype创建数组类型时采用更新的tmpInt。
+   - 本次实验对变量的存取基本没有使用全局变量，而是在每次访问时，创建一个新的scope，结束后用exit()，使用"@"存放可能的返回值，使用"&"存放var的返回地址。（因为变量名不可能有这种字符出现）
+   - 使用tmpInt存放可能要用的int值，这个仅在varDeclaration创建数组中使用，在对num结点遍历后，使用Arraytype创建数组类型时采用更新的tmpInt。（因为varDec时尽可能为integer类型）
    - 使用assignFlag对assign-stmt做标记，以减少无用的冗余，具体见下。
-   - 使用retFlag标记某个stmt里有return-stmt，防止selection-stmt做无用的跳转
+   - 使用retFlag标记某个stmt里有return-stmt，防止selection-stmt产生多余的bb和跳转。具体细节为，在每次if、else、while执行完stmt访问后，进行判断，若retFlag为假，才进行跳转bb及指令的设置。
+   - 使用brDepth对if/else/while中出现的分支进行维护，去除可能存在的冗余BB，具体见下。
 2. 遇到的难点以及解决方案
+   - 在if/else中出现了return则会导致各种报错，通过使用retFlag和brDepth解决。
+   - 函数调用时，数组参数通过指针来传入函数，需要注意使用gep来获取数组首元素地址；如果该参数是个指针，即call所需的参数是该函数接受参数中的参数，是需要直接传入。
+   - 访问var时，对数组的取值遇到困难。解决：对于某个变量，类型为数组和指针的取值方法是不一样的。如果是数组，即通过局部变量定义或全局变量定义的，在使用gep时idx需要两个偏移量，一个是数组元素自身的偏移量，一个是在这个元素中的偏移量；而如果这个var是个指针，即通过函数传入的形参(int \* 或 float \*)去取值，则只需要一个偏移量。
+   - 在assign，return，call，expr中出现传入类型与所需要类型不一致时，进行类型转换，具体是首先判断是否是i1，如果是则直接转化为i32（因为cminusf不接受i1运算，也没有发现i1直接转换成float的方法）；然后在assign, return, call中，若所需类型与传入类型不一致，则强制将传入类型转化为所需类型；在expr中，只要某一个操作数为float，则将另一个数转化为float。在下标运算中，则结果无论如何都强制转化为i32。注意在if和while的cond_br中，考虑到有可能出现expr值不为i1，则加一个判断，若不为i1则和0比较，比零大则为真，反之为假。
 3. 如何降低生成 IR 中的冗余
-   1. 降低访问var时的冗余：在本程序设计中，访问var时需要对数据进行load并返回，但在assign表达式里，对左值的操作并不需要load，这里使用assignFlag对其进行标记。同时考虑到在数组赋值时，下标并不是一个左值，这里需要load，于是又采用一个标记对其进行补充。
+   - 降低访问var时的冗余：在本程序设计中，访问var时需要对数据进行load并返回，但在assign表达式里，对左值的操作并不需要load，因此在访问这个结点时，使用assignFlag对其进行标记。在var中，若assignFlag为假，才进行create_load操作；同时考虑到在数组赋值时，具有特殊性，下标并不是一个左值，这里需要load，于是又采用一个标记assignIndexFlag对其进行缓存，在此时访问expr时，先将assignFlag置为false，访问完以后，再取回原来的assignFlag值。
+   - 降低多余的return的冗余：因为如果出现了if/else里都有return的情况，实际上接下来的所有bb都是不需要的。这里维护一个brDepth进行判断，并在compound-stmt迭代访问stmt时，若brDepth为比迭代之前小，则直接跳出迭代过程，这样就降低了冗余与错误。具体解释如下
+     - 每当访问一个selection-stmt或iteration-stmt时，brDepth++，每遇到一个return-stmt时brDepth--，若一个if-stmt没有返回值也没有else-stmt，brDepth--；若一个if-stmt没有完全return，且else-stmt没有return-stmt时，brDepth--。
 4. ...
 
 
 ### 实验总结
 
-此次实验有什么收获
+学习了各种cpp语法，对访问者模式有了深刻的认识。也在人脑遍历语法树的同时，对cminusf语法掌握得更加深入。
 
 ### 实验反馈 （可选 不会评分）
 
