@@ -134,9 +134,6 @@ void CminusfBuilder::visit(ASTFunDeclaration &node) {
     }
     std::vector<Type *> funParams;
     for (auto param : node.params) {
-        // param->accept(*this);
-        // funParams.push_back(paramTy);
-        //TODO array pointer
         if (param->isarray) {
             LOG(DEBUG) << param->id;
             if (param->type == TYPE_INT)
@@ -163,19 +160,12 @@ void CminusfBuilder::visit(ASTFunDeclaration &node) {
     scope.enter();
     auto bb = BasicBlock::create(module.get(), "", fun);
     builder->set_insert_point(bb);
-    //TODO add args
-    //if not may segfault at call
     std::vector<Value *> args; // 获取函数的形参,通过Function中的iterator
     for (auto arg = fun->arg_begin(); arg != fun->arg_end(); arg++) {
         args.push_back(*arg); // * 号运算符是从迭代器中取出迭代器当前指向的元素
     }
     for (auto param : node.params) {
         param->accept(*this);
-        // if (!param->isarray)
-        //     builder->create_store(args[paraNum], scope.find(param->id));
-        // else {
-        //     scope.push(param->id, args[paraNum]);
-        // }
         builder->create_store(args[paraNum], scope.find(param->id));
         paraNum++;
     }
@@ -203,13 +193,10 @@ void CminusfBuilder::visit(ASTParam &node) {
             paramTy = Type::get_float_type(module.get());
     }
     scope.push(node.id, builder->create_alloca(paramTy));
-    //TODO array
 }
 
 void CminusfBuilder::visit(ASTCompoundStmt &node) {
     LOG(DEBUG) << "compstmt!";
-    //把scope放到了funDeclar里面
-    //TODO 在这里要加个bb？
     int tmpDepth = brDepth;
     for (auto decl : node.local_declarations) {
         decl->accept(*this);
@@ -219,7 +206,6 @@ void CminusfBuilder::visit(ASTCompoundStmt &node) {
         if (brDepth == tmpDepth - 1)
             break;
     }
-    //reconTODO: add ret here
 }
 
 void CminusfBuilder::visit(ASTExpressionStmt &node) {
@@ -241,10 +227,7 @@ void CminusfBuilder::visit(ASTSelectionStmt &node) {
     node.expression->accept(*this);
     auto cond = scope.find("@");
     scope.exit();
-    //TODO maybe the answer is not i1 ??
     //TODO this func is totally ugly
-    //i want to make it elegant
-    //type check
     auto condTy = cond->get_type();
     if (condTy->is_float_type()) {
         cond = builder->create_fcmp_gt(cond, ConstantZero::get(Type::get_float_type(module.get()), module.get()));
@@ -326,14 +309,11 @@ void CminusfBuilder::visit(ASTReturnStmt &node) {
     retFlag = true;
     auto fun = builder->get_insert_block()->get_parent();
     auto funRetTy = fun->get_return_type();
-    // auto retBb = BasicBlock::create(module.get(), "", fun);
-    // builder->set_insert_point(retBb);
     if (node.expression == nullptr || funRetTy->is_void_type()) {
         builder->create_void_ret();
     } else {
         scope.enter();
         node.expression->accept(*this);
-        //TODO type check
         auto retValue = scope.find("@");
         scope.exit();
         if (retValue->get_type()->is_integer_type()) {
@@ -420,7 +400,6 @@ void CminusfBuilder::visit(ASTVar &node) {
     scope.push("&", varAlloca);
     scope.push("@", var);
     tmpValue = var;
-    //TODO array
 }
 
 void CminusfBuilder::visit(ASTAssignExpression &node) {
@@ -455,12 +434,6 @@ void CminusfBuilder::visit(ASTSimpleExpression &node) {
     Value *rhs;
     bool isIntOp = true;
     LOG(DEBUG) << "simp expr";
-    if (node.additive_expression_r == nullptr) {
-        //TODO maybe
-    } else {
-        //TODO relops
-    }
-    //TODO type transer
     scope.enter();
     node.additive_expression_l->accept(*this);
     lhs = scope.find("@");
@@ -570,7 +543,6 @@ void CminusfBuilder::visit(ASTAdditiveExpression &node) {
     rhs = scope.find("@");
     scope.exit();
 
-    //TODO zext
     if (opFlag) {
         auto lhsTy = lhs->get_type();
         auto rhsTy = rhs->get_type();
@@ -626,11 +598,6 @@ void CminusfBuilder::visit(ASTTerm &node) {
     Value *rhs;
     bool isIntOp = true;
     bool opFlag = false;
-    // if (node.term == nullptr) {
-    //     //TODO nothing
-    // } else {
-    //     opFlag = true;
-    // }
     if (node.term != nullptr) {
         opFlag = true;
         scope.enter();
@@ -643,7 +610,6 @@ void CminusfBuilder::visit(ASTTerm &node) {
     rhs = scope.find("@");
     scope.exit();
 
-    //TODO type check
     if (opFlag) {
         auto lhsTy = lhs->get_type();
         auto rhsTy = rhs->get_type();
@@ -698,12 +664,10 @@ void CminusfBuilder::visit(ASTCall &node) {
     std::vector<Value *> callParams;
     auto callFun = scope.find(node.id);
     int paramIndex = 0;
-    //这两行好像用不上
     FunctionType *funTy;
     Type *callFunTy = callFun->get_type();
     if (callFunTy->is_function_type())
         funTy = static_cast<FunctionType *>(callFunTy);
-    //TODO complete int or float
     for (auto arg : node.args) {
         scope.enter();
         arg->accept(*this);
