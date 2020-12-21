@@ -10,8 +10,8 @@
 ## 思考题
 ### LoopSearch
 1. 循环的入口如何确定？循环的入口的数量可能超过1嘛？
-   - 使用`find_loop_base()`确定，逻辑为：对之前Tarjan算法获取的强联通分量进行操作，迭代每个scc的每个node，去判断他们的prev是否在这个scc里，若不在，则返回这个node.
-   - 不可能超过1:
+   - 使用`find_loop_base()`确定，逻辑为：对之前Tarjan算法获取的强联通分量进行操作，迭代每个scc的每个node，去判断他们的prev是否在这个scc里，若不在，则返回这个node；即找到一个从外部跳转进来的块，那个块就是循环的入口。
+   - 不可能超过1: 对于cminus来说，跳转指令只可能是if/else 和 while产生，不会有例如goto语句直接跳转到循环体内部。因此循环的入口只可能是while的条件块。
 2. 简述一下算法怎么解决循环嵌套的情况。
    - 每次使用Tarjan算法后，只会获得大的循环体。在对其进`find_loop_base()`后，将base node加入reserved中，然后删除base node，（同时删除nodes,base后继的prev和前驱的succ中所有的basenode），这样做即将大的scc解体。
    - 接着对所有nodes中的结点初始化，然后回到while大循环，从头开始操作，直到所有的`result.size() == 0`即处理完所有嵌套。
