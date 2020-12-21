@@ -6,7 +6,7 @@
 
 ### 主要工作
 
-1. 了解 `bison` 基础知识和理解 Cminus 语法（重在了解如何将文法产生式转换为 `bison` 语句）
+1. 了解 `bison` 基础知识和理解 Cminus-f 语法（重在了解如何将文法产生式转换为 `bison` 语句）
 2. 阅读 `/src/common/SyntaxTree.c`，对应头文件 `/include/SyntaxTree.h`（重在理解分析树如何生成）
 3. 了解 `bison` 与 `flex` 之间是如何协同工作，看懂pass_node函数并改写 Lab1 代码（提示：了解 `yylval` 是如何工作，在代码层面上如何将值传给`$1`、`$2`等）
 4. 补全 `src/parser/syntax_analyzer.y` 文件和 `lexical_analyzer.l` 文件
@@ -99,7 +99,7 @@ Cminus的详情请参考《编译原理与实践》第九章附录。
 23. $`\text{addop} \rightarrow \textbf{+}\ |\ \textbf{-}`$
 24. $`\text{term} \rightarrow \text{term}\ \text{mulop}\ \text{factor}\ |\ \text{factor}`$
 25. $`\text{mulop} \rightarrow \textbf{*}\ |\ \textbf{/}`$
-26. $`\text{factor} \rightarrow \textbf{(}\ \text{expression}\ \textbf{)}\ |\ \text{var}\ |\ \text{call}\ |\ \textbf{integer}\ |\ \textbf{float}`$
+26. $`\text{factor} \rightarrow \textbf{(}\ \text{expression}\ \textbf{)}\ |\ \text{var}\ |\ \text{call}\ |\ \text{integer}\ |\ \text{float}`$
 27. $`\text{integer} \rightarrow \textbf{INTEGER}`$
 28. $`\text{float} \rightarrow \textbf{FLOATPOINT}`$
 29. $`\text{call} \rightarrow \textbf{ID}\ \textbf{(}\ \text{args} \textbf{)}`$
@@ -129,7 +129,7 @@ void yyerror(const char *s);
 %%
 /* 从这里开始，下面是解析规则 */
 reimu : marisa { /* 这里写与该规则对应的处理代码 */ puts("rule1"); }
-      | REIMU  { /* 这里写与该规则对应的处理代码 */ puts("rule2") }
+      | REIMU  { /* 这里写与该规则对应的处理代码 */ puts("rule2"); }
       ; /* 规则最后不要忘了用分号结束哦～ */
       
 /* 这种写法表示 ε —— 空输入 */
