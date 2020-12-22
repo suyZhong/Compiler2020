@@ -31,6 +31,21 @@ syntax_tree_node *node(const char *node_name, int children_num, ...);
 
 /* TODO: Complete this definition. */
 %union {
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+    syntax_tree_node * node;
+}
+
+/* TODO: Your tokens here. */
+%token <node> ADD SUB MUL DIV LT LTE GT GTE EQ NEQ ASSIN SEMICOLON COMMA LPARENTHESE RPARENTHESE LBRACKET RBRACKET LBRACE RBRACE ELSE IF INT FLOAT RETURN VOID WHILE DIGIT DIGITS FLOATPOINT ARRAY SPACE EOL TAB COMMENT INTEGER IDENTIFIER ERROR
+%type <node> program params param-list param args arg-list simple-expression
+%type <node> expression var additive-expression term factor integer float call
+%type <node> compound-stmt statement-list statement expression-stmt iteration-stmt selection-stmt return-stmt
+%type <node> declaration-list declaration var-declaration fun-declaration local-declarations
+%type <node> type-specifier relop addop mulop
+=======
+>>>>>>> 81f97896594c74de3e83b80e8b549506c01a4247
      struct _syntax_tree_node * node;
      char * name;
 }
@@ -71,6 +86,10 @@ syntax_tree_node *node(const char *node_name, int children_num, ...);
 //%token <node> BLANK
 //%token <node> COMMENT 
 %type <node> program declaration-list declaration var-declaration type-specifier fun-declaration params param-list param compound-stmt local-declarations statement-list statement expression-stmt selection-stmt iteration-stmt return-stmt expression var simple-expression relop additive-expression addop term mulop factor integer float call args arg-list
+<<<<<<< HEAD
+=======
+>>>>>>> 9a7b11f34481c0fdc71212542ea235157df2d7cf
+>>>>>>> 81f97896594c74de3e83b80e8b549506c01a4247
 
 /* compulsory starting symbol */
 %start program
@@ -254,6 +273,22 @@ iteration-stmt
 }
 ;
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+/*17*/
+return-stmt
+: RETURN SEMICOLON
+{
+    $$ = node("return-stmt",2,$1,$2);
+}
+| RETURN expression SEMICOLON
+{
+    $$ = node("return-stmt",3,$1,$2,$3);
+}
+;
+=======
+>>>>>>> 81f97896594c74de3e83b80e8b549506c01a4247
 program : 	declaration-list {$$ = node( "program", 1, $1); gt->root = $$;}
 		;
 
@@ -381,6 +416,10 @@ args 	: 	arg-list {$$ = node( "args", 1, $1);}
 arg-list 	: 	arg-list COMMA expression {$$ = node( "arg-list", 3, $1, $2, $3);}
 			| 	expression {$$ = node( "arg-list", 1, $1);}
 			;
+<<<<<<< HEAD
+=======
+>>>>>>> 9a7b11f34481c0fdc71212542ea235157df2d7cf
+>>>>>>> 81f97896594c74de3e83b80e8b549506c01a4247
 
 /*18*/
 expression
