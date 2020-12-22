@@ -236,6 +236,20 @@ COMMENT \/\*([^\*]|\r|\n)*(\*\**([^\*\/]|\r|\n)([^\*]|\r|\n)*)*\**\*\/
 %%
 /****************C代码 start*************/
 
+
+int count_num_enter(char *string) {
+    int ret = 0;
+    int index = 0;
+    while(string[index] != '\0') {
+        if(string[index] == '\n')
+            ret++;
+        index++;
+    }
+    return ret;
+}
+
+
+
 /// \brief analysize a *.cminus file
 ///
 /// \param input_file, 需要分析的文件路径
