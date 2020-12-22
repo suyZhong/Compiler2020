@@ -202,6 +202,8 @@ void CminusfBuilder::visit(ASTCompoundStmt &node) {
         decl->accept(*this);
     }
     for (auto stmt : node.statement_list) {
+        //failed in scope!!!
+        //remember compound stmt scope！！！！
         scope.enter();
         stmt->accept(*this);
         scope.exit();
