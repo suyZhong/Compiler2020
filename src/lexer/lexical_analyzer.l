@@ -55,179 +55,55 @@ EOL [\n|\r]
 TAB [\t]
 COMMENT \/\*([^\*]|\r|\n)*(\*\**([^\*\/]|\r|\n)([^\*]|\r|\n)*)*\**\*\/
 
-%%
-{SUB} {
-    pos_start = pos_end;
-    pos_end   = pos_start + 1;
-    return (SUB);
-}
-{ADD} {
-    pos_start = pos_end;
-    pos_end   = pos_start + 1;
-    return (ADD);
-}
-{MUL} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (MUL);
-}
-{DIV} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (DIV);
-}
-{LT} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (LT);
-}
-{LTE} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 2;
-    return (LTE);
-}
-{GT} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (GT);
-}
-{GTE} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 2;
-    return (GTE);
-}
-{EQ} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 2;
-    return (EQ);
-}
-{NEQ} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 2;
-    return (NEQ);
-}
-{ASSIN} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (ASSIN);
-}
-{SEMICOLON} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (SEMICOLON);
-}
-{COMMA} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (COMMA);
-}
-{LPARENTHESE} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (LPARENTHESE);
-}
-{RPARENTHESE} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (RPARENTHESE);
-}
-{LBRACKET} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (LBRACKET);
-}
-{RBRACKET} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (RBRACKET);
-}
-{LBRACE} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (LBRACE);
-}
-{RBRACE} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (RBRACE);
-}
-{ELSE} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 4;
-    return (ELSE);
-}
-{IF} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 2;
-    return (IF);
-}
-{INT} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 3;
-    return (INT);
-}
-{FLOAT} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 5;
-    return (FLOAT);
-}
-{RETURN} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 6;
-    return (RETURN);
-}
-{VOID} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 4;
-    return (VOID);
-}
-{WHILE} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 5;
-    return (WHILE);
-}
-{IDENTIFIER} {
-    pos_start = pos_end;
-    pos_end   = pos_start + strlen(yytext);
-    return (IDENTIFIER);
-}
+ /******************TODO*********************/
+ /****请在此补全所有flex的模式与动作  start******/
+ //STUDENT TO DO
+\+  {pos_start = pos_end; pos_end += 1; return ADD;}
+\-  {pos_start = pos_end; pos_end += 1; return SUB;}
+\*  {pos_start = pos_end; pos_end += 1; return MUL;}
+\/  {pos_start = pos_end; pos_end += 1; return DIV;}
+\<  {pos_start = pos_end; pos_end += 1; return LT;}
+\<= {pos_start = pos_end; pos_end += 2; return LTE;}
+\>  {pos_start = pos_end; pos_end += 1; return GT;}
+\>= {pos_start = pos_end; pos_end += 2; return GTE;}
+==  {pos_start = pos_end; pos_end += 2; return EQ;}
+!=  {pos_start = pos_end; pos_end += 2; return NEQ;}
+=   {pos_start = pos_end; pos_end += 1; return ASSIN;}
+;   {pos_start = pos_end; pos_end += 1; return SEMICOLON;}
+,   {pos_start = pos_end; pos_end += 1; return COMMA;}
+\(  {pos_start = pos_end; pos_end += 1; return LPARENTHESE;}
+\)  {pos_start = pos_end; pos_end += 1; return RPARENTHESE;}
+\{  {pos_start = pos_end; pos_end += 1; return LBRACE;}
+\}  {pos_start = pos_end; pos_end += 1; return RBRACE;}
+\[  {pos_start = pos_end; pos_end += 1; return LBRACKET;}
+\]  {pos_start = pos_end; pos_end += 1; return RBRACKET;}
+else    {pos_start = pos_end; pos_end += 4; return ELSE;}
+if  {pos_start = pos_end; pos_end += 2; return IF;}
+int {pos_start = pos_end; pos_end += 3; return INT;}
+float   {pos_start = pos_end; pos_end += 5; return FLOAT;}
+return  {pos_start = pos_end; pos_end += 6; return RETURN;}
+void    {pos_start = pos_end; pos_end += 4; return VOID;}
+while   {pos_start = pos_end; pos_end += 5; return WHILE;}
+[a-zA-Z]+   {pos_start = pos_end; pos_end += strlen(yytext); return IDENTIFIER;}
+[0-9]+  {pos_start = pos_end; pos_end += strlen(yytext); return INTEGER;}
+([0-9]*\.[0-9]+|[0-9]+\.)   {pos_start = pos_end; pos_end += strlen(yytext); return FLOATPOINT;}
+\[\]    {pos_start = pos_end; pos_end += 2; return ARRAY;}
+\n  {lines++; pos_start = 1; pos_end = 1; return EOL;}
+[ \t]   {pos_start = pos_end; pos_end += 1; return BLANK;}
+\/\*([^\*]|(\*)*[^\*/])*(\*)*\*\/   {
+                                        pos_start = pos_end;
+                                        int num = count_num_enter(yytext);  //check if the commnet is the cross-comment
+                                        if ( num != 0 ) {
+                                            lines += num;           //cross comment, update lines and pos_end
+                                            pos_end = strlen(strrchr(yytext, '\n'));
+                                        } else {                    //one line comment, only update pos_end
+                                            pos_end += strlen(yytext);
+                                        }
+                                        return COMMENT;
+                                    }
 
-{SPACE} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (BLANK);
-    }
-{TAB} {
-    pos_start = pos_end ;
-    pos_end   = pos_start + 1;
-    return (BLANK);
-    }
-{EOL} {
-    lines += 1;
-    pos_start = 1;
-    pos_end   = 1;
-    return (EOL);
-}
-{INTEGER} {
-    pos_start = pos_end;
-    pos_end   = pos_start + yyleng;
-    return (INTEGER);
-}
-{FLOATPOINT} {
-    pos_start = pos_end;
-    pos_end   = pos_start + yyleng;
-    return (FLOATPOINT);
-}
-{ARRAY} {
-    pos_start = pos_end;
-    pos_end   = pos_start + 2;
-    return (ARRAY);
-}
-{COMMENT} {
-    comment(yytext,&lines,&pos_start,&pos_end);
-    return (COMMENT);
-}
-. {return ERROR;}
+. {return ERROR;} 
+
 
 
 
@@ -235,6 +111,20 @@ COMMENT \/\*([^\*]|\r|\n)*(\*\**([^\*\/]|\r|\n)([^\*]|\r|\n)*)*\**\*\/
  /****请在此补全所有flex的模式与动作  end******/
 %%
 /****************C代码 start*************/
+
+
+int count_num_enter(char *string) {
+    int ret = 0;
+    int index = 0;
+    while(string[index] != '\0') {
+        if(string[index] == '\n')
+            ret++;
+        index++;
+    }
+    return ret;
+}
+
+
 
 /// \brief analysize a *.cminus file
 ///
@@ -257,6 +147,7 @@ void analyzer(char* input_file, Token_Node* token_stream){
     while(token = yylex()){
         switch(token){
             case COMMENT:
+                //STUDENT TO DO
                 break;
             case BLANK:
                 break;

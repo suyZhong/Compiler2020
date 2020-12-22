@@ -202,7 +202,9 @@ void CminusfBuilder::visit(ASTCompoundStmt &node) {
         decl->accept(*this);
     }
     for (auto stmt : node.statement_list) {
+        scope.enter();
         stmt->accept(*this);
+        scope.exit();
         if (brDepth == tmpDepth - 1)
             break;
     }
