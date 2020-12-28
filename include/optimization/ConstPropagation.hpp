@@ -27,6 +27,11 @@ public:
         ConstantInt *value1,
         ConstantInt *value2);
     // ...
+    void replace_const(
+        Value *value,
+        Function *f
+    );
+
 private:
     Module *module_;
 };
