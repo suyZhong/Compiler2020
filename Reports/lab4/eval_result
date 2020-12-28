@@ -94,8 +94,8 @@ points of lv2 is: 23
 complex1:	Fail
 complex2:	Success
 complex3:	Success
-complex4:	Fail
-points of lv3 is: 5
+complex4:	Success
+points of lv3 is: 8
 ===========lv3 END========
 
-total points: 92
+total points: 95
