@@ -139,6 +139,7 @@ void LoopInvHoist::run() {
         LOG_DEBUG << "make uninvhoist";
         for (auto instr : base->get_instructions()) {
             if (instr->is_phi()) {
+                LOG_INFO << "unInvHoist insert " << instr->get_name();
                 UnInvHoist.insert(instr->get_name());
             }
         }
@@ -148,7 +149,8 @@ void LoopInvHoist::run() {
                 continue;
             }
             for (auto instr : (*bb)->get_instructions()) {
-                if (instr->is_phi()) {
+                if (instr->is_phi() || instr->is_fcmp() || instr->is_cmp()) {
+                    LOG_INFO << "unInvHoist insert " << instr->get_name();
                     UnInvHoist.insert(instr->get_name());
                 } else if (instr->isTerminator() || instr->is_gep() || instr->is_load() || instr->is_store()) {
                     continue;
@@ -241,18 +243,18 @@ void LoopInvHoist::run() {
                 }
                 //是Binary指令：：：：
                 if (instr->isBinary()) {
+                    motionFlag = true;
                     int opNum = instr->get_num_operand();
                     for (i = 0; i < opNum; i++) {
                         auto tmpV = instr->get_operand(i);
+                        LOG_DEBUG << "instr" << instr->get_name() << " op " << i << " " << tmpV->get_name();
                         //开始判断这个tmpV在这个loop里是不是不变的
                         //貌似可以用Phi函数。。？貌似过循环会改变需要phi，所以只要判断在不在phi的左值！
                         //创建个set，把phi左值，phi左值的所有引用的inst都不可以用。
                         if (UnInvHoist.find(tmpV->get_name()) != UnInvHoist.end()) {
-                            break;
+                            motionFlag = false;
                         }
                     }
-                    if (i = opNum)
-                        motionFlag = true;
                     //前移到bb4move
                     if (motionFlag) {
                         wait_move.push_back(instr);
@@ -260,7 +262,6 @@ void LoopInvHoist::run() {
                         // (*bb)->delete_instr(instr);
                     }
                 }
-                LOG_DEBUG << debug++;
             }
             for(auto instr : wait_move){
                 (*bb)->delete_instr(instr);
