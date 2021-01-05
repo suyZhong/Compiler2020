@@ -53,7 +53,7 @@ void ActiveVars::run() {
                         }
                     }
 
-                    if (instr->is_phi() || instr->isBinary() || instr->is_load() || instr->is_call() || instr->is_gep()) {
+                    if (instr->is_phi() || instr->isBinary() || instr->is_load() || instr->is_call() || instr->is_gep() || instr->is_alloca()) {
                         defB[bb].insert(instr);
                     }
                     tmpDef.insert(instr);
@@ -79,8 +79,8 @@ void ActiveVars::run() {
                     // LOG_DEBUG << "bb nums " << func->get_num_basic_blocks();
                     //计算OUT[B]
                     auto tmpIn = live_in[bb];
-                    // live_in[bb].clear();
-                    // live_out[bb].clear();
+                    live_in[bb].clear();
+                    live_out[bb].clear();
                     for (auto succ_bb : bb->get_succ_basic_blocks()) {
                         // LOG_DEBUG << "succbb " <<succ_bb->get_name() << "; bb " << bb->get_name();
                         // for (auto ppp = live_in[succ_bb].begin(); ppp != live_in[succ_bb].end(); ppp++) {
