@@ -41,15 +41,6 @@ void LoopInvHoist::run() {
     LOG_DEBUG << "first-name";
     m_->set_print_name();
     int debug = 10;
-    //目前已知的情报：
-    /**
-     * loop_searcher.get_loop_base
-     * get_inner_loop
-     * get_parent_loop
-     * get_loops_in_func
-     * 
-     * 
-     */
     //首先根据已知情报应该抽取loop出来
     //就简单的想成，对每个loop做迭代吧，如果这个IHinst不在深层循环里面就给他外提
 
@@ -97,22 +88,6 @@ void LoopInvHoist::run() {
                 inLoops.erase(supportStack.back());
             }
         }
-        //循环查找，大循环底下可有小循环
-        //因为不太了解unorderedset，感觉是无序的
-        // while (innerFlag) {
-        //     innerFlag = false;
-        //     for (auto iloop = inLoops.begin(); iloop != inLoops.end(); iloop++) {
-        //         LOG_DEBUG << "push DFS inner loops";
-        //         if (loop_searcher.get_parent_loop(*iloop) == (*loop)) {
-        //             innerFlag = true;
-        //             DFSStack.push_back(*iloop);
-        //             // inLoops.erase(iloop);
-        //         }
-        //         if(debug++ == 10)
-        //             exit(1);
-        //     }
-        //     LOG_DEBUG << "so not here?";
-        // }
     }
     LOG_INFO << "size of DFSStack is " << DFSStack.size();
     LOG_DEBUG << "begin calc loops";
@@ -160,11 +135,6 @@ void LoopInvHoist::run() {
                 }
             }
         }
-        // while (flag) {
-        //     flag = false;
-        //     std::unordered_set<Instruction *> tmpInstrs;
-        //     for (auto instr = UnInvHoist)
-        // }
 
         //现在有了每个正规的loop；对每个loop进行操作
 
