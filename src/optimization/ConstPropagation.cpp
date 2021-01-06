@@ -29,6 +29,37 @@ ConstantInt *ConstFolder::compute(
         break;
     }
 }
+ConstantInt *ConstFolder::compare(
+    CmpInst::CmpOp op,
+    ConstantInt *value1,
+    ConstantInt *value2) {
+
+    int c_value1 = value1->get_value();
+    int c_value2 = value2->get_value();
+    switch (op) {
+    case CmpInst::GE:
+        return ConstantInt::get(c_value1 >= c_value2, module_);
+        break;
+    case CmpInst::GT:
+        return ConstantInt::get(c_value1 > c_value2, module_);
+        break;
+    case CmpInst::LE:
+        return ConstantInt::get(c_value1 <= c_value2, module_);
+        break;
+    case CmpInst::LT:
+        return ConstantInt::get(c_value1 < c_value2, module_);
+        break;
+    case CmpInst::EQ:
+        return ConstantInt::get(c_value1 = c_value2, module_);
+        break;
+    case CmpInst::NE:
+        return ConstantInt::get(c_value1 != c_value2, module_);
+        break;
+    default:
+        return nullptr;
+        break;
+    }
+}
 ConstantFP *ConstFolder::compute(
     Instruction::OpID op,
     ConstantFP *value1,
@@ -49,6 +80,37 @@ ConstantFP *ConstFolder::compute(
         break;
     case Instruction::fdiv:
         return ConstantFP::get(c_value1 / c_value2, module_);
+        break;
+    default:
+        return nullptr;
+        break;
+    }
+}
+ConstantInt *ConstFolder::compare(
+    FCmpInst::CmpOp op,
+    ConstantFP *value1,
+    ConstantFP *value2) {
+
+    int c_value1 = value1->get_value();
+    int c_value2 = value2->get_value();
+    switch (op) {
+    case FCmpInst::GE:
+        return ConstantInt::get(c_value1 >= c_value2, module_);
+        break;
+    case FCmpInst::GT:
+        return ConstantInt::get(c_value1 > c_value2, module_);
+        break;
+    case FCmpInst::LE:
+        return ConstantInt::get(c_value1 <= c_value2, module_);
+        break;
+    case FCmpInst::LT:
+        return ConstantInt::get(c_value1 < c_value2, module_);
+        break;
+    case FCmpInst::EQ:
+        return ConstantInt::get(c_value1 = c_value2, module_);
+        break;
+    case FCmpInst::NE:
+        return ConstantInt::get(c_value1 != c_value2, module_);
         break;
     default:
         return nullptr;
@@ -117,34 +179,72 @@ void ConstFolder::replace_const(Function *f) {
                     LOG_DEBUG << "instr " << instr->get_name() << "is int " << (allConst ? "const" : "");
                 }
             }
-            if (instr->is_fp2si()){
+            if (instr->is_fp2si()) {
                 Value *oper;
                 oper = instr->get_operand(0);
                 auto constFP = cast_constantfp(oper);
                 allConst = constFP != nullptr;
-                if (allConst){
+                if (allConst) {
                     auto ans = ConstantInt::get((int)(constFP->get_value()), module_);
                     LOG_DEBUG << "the fp2si " << instr->get_name() << " from " << constFP->get_value() << "to" << (int)(constFP->get_value());
                     instr->replace_all_use_with(ans);
                 }
             }
-            if (instr->is_si2fp()){
+            if (instr->is_si2fp()) {
+                Value *oper;
+                oper = instr->get_operand(0);
+                auto constInt = cast_constantint(oper);
+                allConst = constInt != nullptr;
+                if (allConst) {
+                    auto ans = ConstantFP::get((float)(constInt->get_value()), module_);
+                    instr->replace_all_use_with(ans);
+                }
+            }
+            if (instr->is_cmp()) {
+                Value *oper0, *oper1;
+                auto cmpInst = static_cast<CmpInst *>(instr);
+                auto opID = cmpInst->get_cmp_op();
+                oper0 = instr->get_operand(0);
+                oper1 = instr->get_operand(1);
+                auto constInt0 = cast_constantint(oper0);
+                auto constInt1 = cast_constantint(oper1);
+                allConst = constInt0 != nullptr && constInt1 != nullptr;
+                if (allConst) {
+                    auto ans = compare(opID, constInt0, constInt1);
+                    instr->replace_all_use_with(ans);
+                }
+            }
+            if (instr->is_fcmp()) {
+                Value *oper0, *oper1;
+                auto fcmpInst = static_cast<FCmpInst *>(instr);
+                auto opID = fcmpInst->get_cmp_op();
+                oper0 = instr->get_operand(0);
+                oper1 = instr->get_operand(1);
+                auto constInt0 = cast_constantfp(oper0);
+                auto constInt1 = cast_constantfp(oper1);
+                allConst = constInt0 != nullptr && constInt1 != nullptr;
+                if (allConst) {
+                    auto ans = compare(opID, constInt0, constInt1);
+                    instr->replace_all_use_with(ans);
+                }
+            }
+            if (instr->is_zext()){
                 Value *oper;
                 oper = instr->get_operand(0);
                 auto constInt = cast_constantint(oper);
                 allConst = constInt != nullptr;
                 if (allConst){
-                    auto ans = ConstantFP::get((float)(constInt->get_value()), module_);
+                    int iValue = constInt->get_value();
+                    auto ans = ConstantInt::get(iValue, module_);
                     instr->replace_all_use_with(ans);
                 }
             }
-            
             if (allConst) {
                 wait_delete.push_back(instr);
             }
         }
         //删除需要删除的instr
-        for (auto instr : wait_delete){
+        for (auto instr : wait_delete) {
             bb->delete_instr(instr);
         }
     }

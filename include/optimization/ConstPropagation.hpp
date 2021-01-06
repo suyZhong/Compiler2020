@@ -31,6 +31,14 @@ public:
         Instruction::OpID op,
         ConstantFP *value1,
         ConstantFP *value2);
+    ConstantInt *compare(
+        CmpInst::CmpOp op,
+        ConstantInt *value1,
+        ConstantInt *value2);
+    ConstantInt *compare(
+        FCmpInst::CmpOp op,
+        ConstantFP *value1,
+        ConstantFP *value2);
     void replace_const(
         Function *f);
 
