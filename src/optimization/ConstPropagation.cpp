@@ -6,13 +6,11 @@
 ConstantInt *ConstFolder::compute(
     Instruction::OpID op,
     ConstantInt *value1,
-    ConstantInt *value2)
-{
+    ConstantInt *value2) {
 
     int c_value1 = value1->get_value();
     int c_value2 = value2->get_value();
-    switch (op)
-    {
+    switch (op) {
     case Instruction::add:
         return ConstantInt::get(c_value1 + c_value2, module_);
 
@@ -31,29 +29,47 @@ ConstantInt *ConstFolder::compute(
         break;
     }
 }
+ConstantFP *ConstFolder::compute(
+    Instruction::OpID op,
+    ConstantFP *value1,
+    ConstantFP *value2) {
+
+    float c_value1 = value1->get_value();
+    float c_value2 = value2->get_value();
+    switch (op) {
+    case Instruction::fadd:
+        return ConstantFP::get(c_value1 + c_value2, module_);
+
+        break;
+    case Instruction::fsub:
+        return ConstantFP::get(c_value1 - c_value2, module_);
+        break;
+    case Instruction::fmul:
+        return ConstantFP::get(c_value1 * c_value2, module_);
+        break;
+    case Instruction::fdiv:
+        return ConstantFP::get(c_value1 / c_value2, module_);
+        break;
+    default:
+        return nullptr;
+        break;
+    }
+}
 
 // 用来判断value是否为ConstantFP，如果不是则会返回nullptr
-ConstantFP *cast_constantfp(Value *value)
-{
+ConstantFP *cast_constantfp(Value *value) {
     auto constant_fp_ptr = dynamic_cast<ConstantFP *>(value);
-    if (constant_fp_ptr)
-    {
+    if (constant_fp_ptr) {
         return constant_fp_ptr;
-    }
-    else
-    {
+    } else {
         return nullptr;
     }
 }
-ConstantInt *cast_constantint(Value *value)
-{
+ConstantInt *cast_constantint(Value *value) {
     auto constant_int_ptr = dynamic_cast<ConstantInt *>(value);
-    if (constant_int_ptr)
-    {
+    if (constant_int_ptr) {
         return constant_int_ptr;
-    }
-    else
-    {
+    } else {
         return nullptr;
     }
 }
@@ -68,15 +84,68 @@ ConstantInt *cast_constantint(Value *value)
  * 
  * 注意浮点数整数，用
 */
-void ConstFolder::replace_const(Value *value, Function *f){
+void ConstFolder::replace_const(Function *f) {
     std::vector<Instruction *> wait_delete;
     for (auto bb : f->get_basic_blocks()) {
-        for (auto instr : bb->get_instructions()){
+        for (auto instr : bb->get_instructions()) {
             //如果这条指令是Binary即运算指令
             //需要用到get_operand 具体参考LightIR文档
-            if(instr->isBinary()){
+            bool allConst = false;
+            if (instr->isBinary()) {
                 //TODO
+                Value *oper0, *oper1;
+                auto opID = instr->get_instr_type();
+                oper0 = instr->get_operand(0);
+                oper1 = instr->get_operand(1);
+                if (oper0->get_type()->is_float_type()) {
+                    auto constFP0 = cast_constantfp(oper0);
+                    auto constFP1 = cast_constantfp(oper1);
+                    allConst = constFP0 != nullptr && constFP1 != nullptr;
+                    if (allConst) {
+                        auto ans = compute(opID, constFP0, constFP1);
+                        instr->replace_all_use_with(ans);
+                    }
+                    LOG_DEBUG << "instr " << instr->get_name() << "is float " << (allConst ? "const" : "");
+                } else if (oper0->get_type()->is_integer_type()) {
+                    auto constInt0 = cast_constantint(oper0);
+                    auto constInt1 = cast_constantint(oper1);
+                    allConst = constInt0 != nullptr && constInt1 != nullptr;
+                    if (allConst) {
+                        auto ans = compute(opID, constInt0, constInt1);
+                        instr->replace_all_use_with(ans);
+                    }
+                    LOG_DEBUG << "instr " << instr->get_name() << "is int " << (allConst ? "const" : "");
+                }
             }
+            if (instr->is_fp2si()){
+                Value *oper;
+                oper = instr->get_operand(0);
+                auto constFP = cast_constantfp(oper);
+                allConst = constFP != nullptr;
+                if (allConst){
+                    auto ans = ConstantInt::get((int)(constFP->get_value()), module_);
+                    LOG_DEBUG << "the fp2si " << instr->get_name() << " from " << constFP->get_value() << "to" << (int)(constFP->get_value());
+                    instr->replace_all_use_with(ans);
+                }
+            }
+            if (instr->is_si2fp()){
+                Value *oper;
+                oper = instr->get_operand(0);
+                auto constInt = cast_constantint(oper);
+                allConst = constInt != nullptr;
+                if (allConst){
+                    auto ans = ConstantFP::get((float)(constInt->get_value()), module_);
+                    instr->replace_all_use_with(ans);
+                }
+            }
+            
+            if (allConst) {
+                wait_delete.push_back(instr);
+            }
+        }
+        //删除需要删除的instr
+        for (auto instr : wait_delete){
+            bb->delete_instr(instr);
         }
     }
 }
@@ -93,10 +162,11 @@ void ConstFolder::replace_const(Value *value, Function *f){
  *  
  */
 
-void ConstPropagation::run()
-{
+void ConstPropagation::run() {
     // 从这里开始吧！
     //try just propagate compute!
-    for (auto f:m_->get_functions()){
+    for (auto f : m_->get_functions()) {
+        ConstFolder CF(m_);
+        CF.replace_const(f);
     }
 }
