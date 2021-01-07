@@ -136,6 +136,34 @@ ConstantInt *cast_constantint(Value *value) {
     }
 }
 
+BasicBlock *ConstFolder::traverseBranch(BasicBlock *bb, int depth) {
+
+    if (depth == 1 && bb->get_pre_basic_blocks().size() == 2) {
+        return bb;
+    }
+    LOG_DEBUG << "rb insert " << bb->get_name();
+    if (bb->get_name() == "label27")
+        LOG_DEBUG << depth << "qwe" << bb->get_pre_basic_blocks().size();
+    redundantBBs.insert(bb);
+    if (bb->get_pre_basic_blocks().size() == 2) {
+        depth -= 1;
+    }
+    if (bb->get_name() == "label24")
+        LOG_DEBUG << depth << "asd" << bb->get_succ_basic_blocks().size();
+    if (bb->get_succ_basic_blocks().size() == 2) {
+        depth += 1;
+    } else if (bb->get_succ_basic_blocks().size() == 0) {
+        return nullptr;
+    }
+    BasicBlock *exit = nullptr;
+    for (auto nextbb : bb->get_succ_basic_blocks()) {
+        exit = traverseBranch(nextbb, depth);
+        // if (exit != nullptr) {
+        //     return exit;
+        // }
+    }
+    return exit;
+}
 /*
  *  写给队友的一些话：
  *  这个函数用来将所有的常数运算及其所有的表现形式都做一个替换，以便删除
@@ -149,6 +177,9 @@ ConstantInt *cast_constantint(Value *value) {
 void ConstFolder::replace_const(Function *f) {
     std::vector<Instruction *> wait_delete;
     for (auto bb : f->get_basic_blocks()) {
+        std::unordered_map<Value *, Value *> vGlobal;
+        std::map<Value *, int *> iGlobal;
+        std::map<Value *, float *> fGlobal;
         for (auto instr : bb->get_instructions()) {
             //如果这条指令是Binary即运算指令
             //需要用到get_operand 具体参考LightIR文档
@@ -228,15 +259,40 @@ void ConstFolder::replace_const(Function *f) {
                     instr->replace_all_use_with(ans);
                 }
             }
-            if (instr->is_zext()){
+            if (instr->is_zext()) {
                 Value *oper;
                 oper = instr->get_operand(0);
                 auto constInt = cast_constantint(oper);
                 allConst = constInt != nullptr;
-                if (allConst){
+                if (allConst) {
                     int iValue = constInt->get_value();
                     auto ans = ConstantInt::get(iValue, module_);
                     instr->replace_all_use_with(ans);
+                }
+            }
+            if (instr->is_store()){
+                Value *rval, *lval;
+                rval = instr->get_operand(0);
+                lval = instr->get_operand(1);
+                if (rval->get_type()->is_integer_type()) {
+                    auto constInt = cast_constantint(rval);
+                    if(constInt != nullptr){
+                        vGlobal.insert({lval, rval});
+                    }
+                } else if (rval->get_type()->is_float_type()) {
+                    auto constFP = cast_constantfp(rval);
+                    if(constFP != nullptr){
+                        vGlobal.insert({lval, rval});
+                    }
+                }
+            }
+            if(instr->is_load()){
+                Value *lval;
+                lval = instr->get_operand(0);
+                if(vGlobal.find(lval)!=vGlobal.end()){
+                    allConst = true;
+                    auto value = vGlobal[lval];
+                    instr->replace_all_use_with(value);
                 }
             }
             if (allConst) {
@@ -247,6 +303,68 @@ void ConstFolder::replace_const(Function *f) {
         for (auto instr : wait_delete) {
             bb->delete_instr(instr);
         }
+    }
+}
+
+void ConstFolder::clear_redundancy(Function *f) {
+    redundantBBs.clear();
+    for (auto bb : f->get_basic_blocks()) {
+        BasicBlock *nextBB = nullptr;
+        std::vector<Instruction *> wait_delete;
+        if (redundantBBs.find(bb) != redundantBBs.end()) {
+            continue;
+        }
+        auto term = bb->get_terminator();
+        if (term->is_br()) {
+            auto brTerm = static_cast<BranchInst *>(term);
+            if (brTerm->is_cond_br()) {
+                auto flagValue = brTerm->get_operand(0);
+                auto flag = cast_constantint(flagValue);
+                if (flag != nullptr) {
+                    BasicBlock *brBB, *uselessBB;
+                    if (flag->get_value()) {
+                        brBB = static_cast<BasicBlock *>(brTerm->get_operand(1));
+                        uselessBB = static_cast<BasicBlock *>(brTerm->get_operand(2));
+                    } else {
+                        brBB = static_cast<BasicBlock *>(brTerm->get_operand(2));
+                        uselessBB = static_cast<BasicBlock *>(brTerm->get_operand(1));
+                    }
+                    LOG_INFO << "want to delete " << uselessBB->get_name();
+                    nextBB = traverseBranch(uselessBB, 1);
+                    bb->delete_instr(brTerm);
+                    auto brInst = BranchInst::create_br(brBB, bb);
+                }
+            }
+        }
+        if (nextBB != nullptr) {
+            // LOG_DEBUG << "branch next bb is " << nextBB->get_name();
+            for (auto instr : nextBB->get_instructions()) {
+                if (instr->is_phi() && instr->get_num_operand() == 4) {
+                    auto oper0 = instr->get_operand(0);
+                    auto label0 = instr->get_operand(1);
+                    auto oper1 = instr->get_operand(2);
+                    auto label1 = instr->get_operand(3);
+                    auto bb0 = static_cast<BasicBlock *>(label0);
+                    auto bb1 = static_cast<BasicBlock *>(label1);
+                    if (redundantBBs.find(bb0) != redundantBBs.end() && redundantBBs.find(bb1) == redundantBBs.end()) {
+                        auto ans = oper1;
+                        wait_delete.push_back(instr);
+                        instr->replace_all_use_with(oper1);
+                    }
+                    if (redundantBBs.find(bb1) != redundantBBs.end() && redundantBBs.find(bb0) == redundantBBs.end()) {
+                        auto ans = oper0;
+                        wait_delete.push_back(instr);
+                        instr->replace_all_use_with(oper0);
+                    }
+                }
+            }
+        }
+        for (auto instr : wait_delete) {
+            nextBB->delete_instr(instr);
+        }
+    }
+    for (auto bb : redundantBBs) {
+        f->remove(bb);
     }
 }
 
@@ -268,5 +386,6 @@ void ConstPropagation::run() {
     for (auto f : m_->get_functions()) {
         ConstFolder CF(m_);
         CF.replace_const(f);
+        CF.clear_redundancy(f);
     }
 }

@@ -19,7 +19,7 @@ BasicBlock *findNextExit(BasicBlock *bb, int depth) {
     }
     if (bb->get_succ_basic_blocks().size() == 2) {
         depth += 1;
-    } else {
+    } else if (bb->get_succ_basic_blocks().size() == 0){
         return nullptr;
     }
     for (auto nextbb : bb->get_succ_basic_blocks()) {

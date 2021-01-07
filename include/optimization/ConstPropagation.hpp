@@ -10,11 +10,11 @@
 #include <vector>
 #include <stack>
 #include <unordered_map>
+#include <unordered_set>
 
 // tips: 用来判断value是否为ConstantFP/ConstantInt
 ConstantFP* cast_constantfp(Value *value);
 ConstantInt* cast_constantint(Value *value);
-
 
 // tips: ConstFloder类
 
@@ -41,9 +41,13 @@ public:
         ConstantFP *value2);
     void replace_const(
         Function *f);
+    void clear_redundancy(
+        Function *f);
+    BasicBlock *traverseBranch(BasicBlock *bb, int depth);
 
 private:
     Module *module_;
+    std::unordered_set<BasicBlock *> redundantBBs;
 };
 
 class ConstPropagation : public Pass
