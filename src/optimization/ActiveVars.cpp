@@ -22,6 +22,10 @@ void ActiveVars::run() {
             //1. init use and def
             LOG_DEBUG << "begin init";
             std::map<BasicBlock *, std::set<Value *>> defB, useB, phiUseB, phiOutB;
+            std::set<Value *> argus;
+            for (auto arg : func->get_args()) {
+                argus.insert(arg);
+            }
             for (auto bb : func->get_basic_blocks()) {
                 std::set<Value *> tmpDef;
                 // for (auto arg : func->get_args()) {
@@ -42,12 +46,16 @@ void ActiveVars::run() {
                                 if (instr->is_phi()) {
                                     phiUseB[bb].insert(oper);
                                     auto oriBB = instr->get_operand(i + 1);
-                                    for(auto preBB:bb->get_pre_basic_blocks()){
-                                        if(preBB->get_name() == oriBB->get_name()){
+                                    for (auto preBB : bb->get_pre_basic_blocks()) {
+                                        if (preBB->get_name() == oriBB->get_name()) {
                                             phiOutB[preBB].insert(oper);
                                         }
                                     }
                                     // phi_use_bb[oper] = instr->get_operand(i + 1);
+                                } else {
+                                    if (phiUseB[bb].find(oper) != phiUseB[bb].end()) {
+                                        phiUseB[bb].erase(oper);
+                                    }
                                 }
                             }
                         }
@@ -59,12 +67,12 @@ void ActiveVars::run() {
                     tmpDef.insert(instr);
                 }
                 //2. for (iterate IN and OUT)
-                for (auto ppp = defB[bb].begin(); ppp != defB[bb].end(); ppp++) {
-                    std::cout << "defB " << bb->get_name() << (*ppp)->get_name() << std::endl;
-                }
-                for (auto ppp = useB[bb].begin(); ppp != useB[bb].end(); ppp++) {
-                    std::cout << "useB " << bb->get_name() << (*ppp)->get_name() << std::endl;
-                }
+                // for (auto ppp = defB[bb].begin(); ppp != defB[bb].end(); ppp++) {
+                //     std::cout << "defB " << bb->get_name() << (*ppp)->get_name() << std::endl;
+                // }
+                // for (auto ppp = useB[bb].begin(); ppp != useB[bb].end(); ppp++) {
+                //     std::cout << "useB " << bb->get_name() << (*ppp)->get_name() << std::endl;
+                // }
             }
             // no use emm
             // BasicBlock *exitBB;
@@ -82,10 +90,6 @@ void ActiveVars::run() {
                     live_in[bb].clear();
                     live_out[bb].clear();
                     for (auto succ_bb : bb->get_succ_basic_blocks()) {
-                        // LOG_DEBUG << "succbb " <<succ_bb->get_name() << "; bb " << bb->get_name();
-                        // for (auto ppp = live_in[succ_bb].begin(); ppp != live_in[succ_bb].end(); ppp++) {
-                        //     std::cout << "live_in " << succ_bb->get_name() << (*ppp)->get_name() << std::endl;
-                        // }
                         for (auto oper = live_in[succ_bb].begin(); oper != live_in[succ_bb].end(); oper++) {
                             //看看是不是在交叉边
                             if (phiUseB[succ_bb].find(*oper) != phiUseB[succ_bb].end() && phiOutB[bb].find(*oper) == phiOutB[bb].end()) {
