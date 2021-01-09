@@ -2,6 +2,19 @@
 #include "ConstPropagation.hpp"
 #include "logging.hpp"
 
+/* 
+ * TODO: 
+ * 1. 删除用不了的While循环
+ * 2. 考虑一些store变量
+ * 
+ * 
+ * 
+ * 
+ */ 
+
+
+
+
 void MarkedCodeDeletion::deleteNoUseFunc(Module *m) {
     std::vector<Function *> wait_delete;
     for (auto func : m->get_functions()) {
@@ -81,13 +94,13 @@ void MarkedCodeDeletion::markSafeFunc(Module *m) {
     }
 }
 
-bool MarkedCodeDeletion::isDead(Instruction *instr) {
-    return deadInstr[bb_].find(instr) != deadInstr[bb_].end();
+bool MarkedCodeDeletion::isLive(Instruction *instr) {
+    return liveInstr.find(instr) != liveInstr.end();
 }
 
 void MarkedCodeDeletion::findAllDep(Instruction *markedInstr) {
     std::vector<Value *> wait4check;
-    deadInstr[bb_].erase(markedInstr);
+    liveInstr.insert(markedInstr);
     for (auto oper : markedInstr->get_operands()) {
         if (!oper->get_type()->is_label_type() && !oper->get_type()->is_function_type()) {
             wait4check.push_back(oper);
@@ -97,14 +110,16 @@ void MarkedCodeDeletion::findAllDep(Instruction *markedInstr) {
         auto check = wait4check.back();
         wait4check.pop_back();
         LOG_DEBUG << "find " << check->get_name() << " dependency";
-        deadInstr[bb_].erase(check);
+        // deadInstr[bb_].erase(check);
+        liveInstr.insert(check);
         auto instr = static_cast<Instruction *>(check);
         for (auto oper : instr->get_operands()) {
             auto tmpInst = dynamic_cast<Instruction *>(oper);
             if (tmpInst)
-                if (isDead(tmpInst) && !oper->get_type()->is_label_type() && !oper->get_type()->is_function_type()) {
-                    wait4check.push_back(oper);
-                }
+                LOG_DEBUG << "op " << oper->get_name();
+            if (!isLive(tmpInst) && !oper->get_type()->is_label_type() && !oper->get_type()->is_function_type()) {
+                wait4check.push_back(oper);
+            }
         }
     }
 }
@@ -131,6 +146,13 @@ void MarkedCodeDeletion::markUseInstr(Function *f) {
                     findAllDep(instr);
                 }
             }
+            if(instr->is_br()){
+                auto cbrInstr = static_cast<BranchInst *>(instr);
+                if(cbrInstr->is_cond_br()){
+                    
+                    findAllDep(instr);
+                }
+            }
             if (instr->is_store()) {
                 findAllDep(instr);
             }
@@ -149,17 +171,16 @@ void MarkedCodeDeletion::run() {
     markSafeFunc(m_);
     //找到main函数，把output有关的，ret有关的弄出来
     for (auto func : m_->get_functions()) {
-        if (func->get_name() == "main") {
-            markUseInstr(func);
-            break;
-        }
+        func_ = func;
+        markUseInstr(func);
     }
     for (auto func : m_->get_functions()) {
+        func_ = func;
         for (auto bb : func->get_basic_blocks()) {
             for (auto instr : deadInstr[bb]) {
                 auto dInstr = dynamic_cast<Instruction *>(instr);
                 LOG_DEBUG << "delete instr " << dInstr->get_name();
-                if (dInstr)
+                if (dInstr&& liveInstr.find(dInstr) == liveInstr.end())
                     bb->delete_instr(dInstr);
             }
         }

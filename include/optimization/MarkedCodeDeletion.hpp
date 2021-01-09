@@ -18,7 +18,7 @@ public:
     MarkedCodeDeletion(Module *m) : Pass(m) {}
     void run() override;
     void findAllDep(Instruction *instr);
-    bool isDead(Instruction *instr);
+    bool isLive(Instruction *instr);
     void deleteNoUseFunc(Module *m);
     void deleteNoUseInst(Module *m);
     void markSafeFunc(Module *m);
@@ -28,6 +28,7 @@ private:
     Function *func_;
     BasicBlock *bb_;
     std::map<BasicBlock *, std::set<Value *>> deadInstr;
+    std::set<Value *> liveInstr;
     std::unordered_set<Value *> safeFunc;
 };
 
