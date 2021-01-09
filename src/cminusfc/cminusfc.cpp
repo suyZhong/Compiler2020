@@ -7,6 +7,7 @@
 #include "LoopInvHoist.hpp"
 #include "ActiveVars.hpp"
 #include "ConstPropagation.hpp"
+#include "MarkedCodeDeletion.hpp"
 #include <iostream>
 #include <fstream>
 #include <memory>
@@ -28,6 +29,7 @@ int main(int argc, char **argv) {
     bool activevars = false;
     bool loop_inv_hoist = false;
     bool loop_search = false;
+    bool mark_deletion = false;
 
     for (int i = 1;i < argc;++i) {
         if (argv[i] == "-h"s || argv[i] == "--help"s) {
@@ -55,6 +57,8 @@ int main(int argc, char **argv) {
             const_propagation = true;
         } else if (argv[i] == "-active-vars"s) {
             activevars = true;
+        } else if (argv[i] == "-mark-deletion"s) {
+            mark_deletion = true;
         } else {
             if (input_path.empty()) {
                 input_path = argv[i];
@@ -116,6 +120,10 @@ int main(int argc, char **argv) {
     if( loop_inv_hoist )
     {
         PM.add_pass<LoopInvHoist>(true);
+    }
+    if( mark_deletion )
+    {
+        PM.add_pass<MarkedCodeDeletion>(true);
     }
     PM.run();
     
