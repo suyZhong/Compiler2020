@@ -104,6 +104,10 @@ void Module::add_function(Function *f)
 std::list<Function* > Module::get_functions(){
     return function_list_;
 }
+void Module::delete_function(Function *f){
+    function_list_.remove(f);
+}
+
 void Module::add_global_variable(GlobalVariable* g)
 {
     global_list_.push_back(g);

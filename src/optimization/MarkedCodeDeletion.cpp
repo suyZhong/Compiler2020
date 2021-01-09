@@ -16,7 +16,19 @@ void MarkedCodeDeletion::deleteNoUseFunc(Module *m) {
         }
     }
     for (auto func : wait_delete) {
-        m->get_functions().remove(func);
+        m->delete_function(func);
+        // std::list<Function *>::iterator iter;
+        // for (iter = funcs.begin(); iter != funcs.end(); iter++) {
+        //     if (*iter = func) {
+        //         LOG_DEBUG << "delete func" << func->get_name();
+        //         break;
+        //     }
+        // }
+        // funcs.erase(iter);
+        // funcs.remove(func);
+    }
+    for (auto func : m->get_functions()) {
+        LOG_DEBUG << func->get_name();
     }
 }
 void MarkedCodeDeletion::deleteNoUseInst(Module *m) {
@@ -30,7 +42,7 @@ void MarkedCodeDeletion::deleteNoUseInst(Module *m) {
                 auto isVital = instr->isTerminator() || instr->is_call() || instr->is_store();
                 if (!isVital && instr->get_use_list().empty()) {
                     wait_delete.push_back(instr);
-                } else if(!isVital)
+                } else if (!instr->is_void())
                     deadInstr[bb].insert(instr);
             }
             //清除普通死代码
@@ -59,6 +71,9 @@ void MarkedCodeDeletion::markSafeFunc(Module *m) {
                 break;
             }
         }
+        auto funcName = func->get_name();
+        if (funcName == "output" || funcName == "outputFloat" || funcName == "neg_idx_except")
+            safe = false;
         if (safe) {
             LOG_DEBUG << "insert safeFunc func " << func->get_name();
             safeFunc.insert(func);
@@ -81,24 +96,34 @@ void MarkedCodeDeletion::findAllDep(Instruction *markedInstr) {
     while (!wait4check.empty()) {
         auto check = wait4check.back();
         wait4check.pop_back();
+        LOG_DEBUG << "find " << check->get_name() << " dependency";
         deadInstr[bb_].erase(check);
         auto instr = static_cast<Instruction *>(check);
         for (auto oper : instr->get_operands()) {
-            if (isDead(instr) && !oper->get_type()->is_label_type() && !oper->get_type()->is_function_type()) {
-                wait4check.push_back(oper);
-            }
+            auto tmpInst = dynamic_cast<Instruction *>(oper);
+            if (tmpInst)
+                if (isDead(tmpInst) && !oper->get_type()->is_label_type() && !oper->get_type()->is_function_type()) {
+                    wait4check.push_back(oper);
+                }
         }
     }
 }
 
 void MarkedCodeDeletion::markUseInstr(Function *f) {
     for (auto bb : f->get_basic_blocks()) {
+        bb_ = bb;
         for (auto instr : bb->get_instructions()) {
             if (instr->is_call()) {
                 auto callee = dynamic_cast<Function *>(instr->get_operand(0));
                 LOG_DEBUG << "check func " << callee->get_name();
                 if (callee) {
-                    findAllDep(instr);
+                    if (safeFunc.find(callee) != safeFunc.end()) {
+                        LOG_DEBUG << callee->get_name() << " is safe!";
+                        deadInstr[bb].insert(instr);
+                        continue;
+                    } else {
+                        findAllDep(instr);
+                    }
                 }
             }
             if (instr->is_ret()) {
@@ -133,6 +158,7 @@ void MarkedCodeDeletion::run() {
         for (auto bb : func->get_basic_blocks()) {
             for (auto instr : deadInstr[bb]) {
                 auto dInstr = dynamic_cast<Instruction *>(instr);
+                LOG_DEBUG << "delete instr " << dInstr->get_name();
                 if (dInstr)
                     bb->delete_instr(dInstr);
             }
