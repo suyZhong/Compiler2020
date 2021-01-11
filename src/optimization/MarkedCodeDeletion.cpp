@@ -10,10 +10,7 @@
  * 
  * 
  * 
- */ 
-
-
-
+ */
 
 void MarkedCodeDeletion::deleteNoUseFunc(Module *m) {
     std::vector<Function *> wait_delete;
@@ -103,7 +100,8 @@ void MarkedCodeDeletion::findAllDep(Instruction *markedInstr) {
     liveInstr.insert(markedInstr);
     for (auto oper : markedInstr->get_operands()) {
         if (!oper->get_type()->is_label_type() && !oper->get_type()->is_function_type()) {
-            wait4check.push_back(oper);
+            if (args_.find(oper) == args_.end())
+                wait4check.push_back(oper);
         }
     }
     while (!wait4check.empty()) {
@@ -118,13 +116,17 @@ void MarkedCodeDeletion::findAllDep(Instruction *markedInstr) {
             if (tmpInst)
                 LOG_DEBUG << "op " << oper->get_name();
             if (!isLive(tmpInst) && !oper->get_type()->is_label_type() && !oper->get_type()->is_function_type()) {
-                wait4check.push_back(oper);
+                if (args_.find(oper) == args_.end())
+                    wait4check.push_back(oper);
             }
         }
     }
 }
 
 void MarkedCodeDeletion::markUseInstr(Function *f) {
+    for (auto arg : f->get_args()) {
+        args_.insert(arg);
+    }
     for (auto bb : f->get_basic_blocks()) {
         bb_ = bb;
         for (auto instr : bb->get_instructions()) {
@@ -143,13 +145,14 @@ void MarkedCodeDeletion::markUseInstr(Function *f) {
             }
             if (instr->is_ret()) {
                 if (instr->get_num_operand() != 0) {
-                    findAllDep(instr);
+                    if (args_.find(instr->get_operand(0)) == args_.end())
+                        findAllDep(instr);
                 }
             }
-            if(instr->is_br()){
+            if (instr->is_br()) {
                 auto cbrInstr = static_cast<BranchInst *>(instr);
-                if(cbrInstr->is_cond_br()){
-                    
+                if (cbrInstr->is_cond_br()) {
+
                     findAllDep(instr);
                 }
             }
@@ -172,6 +175,7 @@ void MarkedCodeDeletion::run() {
     //找到main函数，把output有关的，ret有关的弄出来
     for (auto func : m_->get_functions()) {
         func_ = func;
+        args_.clear();
         markUseInstr(func);
     }
     for (auto func : m_->get_functions()) {
@@ -180,7 +184,7 @@ void MarkedCodeDeletion::run() {
             for (auto instr : deadInstr[bb]) {
                 auto dInstr = dynamic_cast<Instruction *>(instr);
                 LOG_DEBUG << "delete instr " << dInstr->get_name();
-                if (dInstr&& liveInstr.find(dInstr) == liveInstr.end())
+                if (dInstr && liveInstr.find(dInstr) == liveInstr.end())
                     bb->delete_instr(dInstr);
             }
         }

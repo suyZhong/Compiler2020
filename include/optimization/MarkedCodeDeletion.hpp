@@ -27,6 +27,7 @@ public:
 private:
     Function *func_;
     BasicBlock *bb_;
+    std::unordered_set<Value *> args_;
     std::map<BasicBlock *, std::set<Value *>> deadInstr;
     std::set<Value *> liveInstr;
     std::unordered_set<Value *> safeFunc;
