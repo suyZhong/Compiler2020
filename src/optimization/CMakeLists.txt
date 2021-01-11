@@ -7,4 +7,5 @@ add_library(
         ActiveVars.cpp
         LoopInvHoist.cpp
         MarkedCodeDeletion.cpp
+        GlobalSubExprDeletion.cpp
 )

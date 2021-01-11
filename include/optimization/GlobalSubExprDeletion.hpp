@@ -2,8 +2,8 @@
 #define GLOBALSUBEXPRDELETION_HPP
 
 #include "Constant.h"
-#include "Instruction.h"
-#include "Module.h"
+// #include "Instruction.h"
+// #include "Module.h"
 #include "PassManager.hpp"
 
 #include "IRBuilder.h"
@@ -23,6 +23,7 @@ public:
 
 private:
     std::map<BasicBlock *, std::set<std::pair<Value *, Value *>>> avail_in, avail_out;
+    std::map<std::pair<Value *, Value *>, Instruction *> commonExpr_;
 };
 
 #endif

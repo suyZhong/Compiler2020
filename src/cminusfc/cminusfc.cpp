@@ -8,6 +8,7 @@
 #include "ActiveVars.hpp"
 #include "ConstPropagation.hpp"
 #include "MarkedCodeDeletion.hpp"
+#include "GlobalSubExprDeletion.hpp"
 #include <iostream>
 #include <fstream>
 #include <memory>
@@ -30,6 +31,7 @@ int main(int argc, char **argv) {
     bool loop_inv_hoist = false;
     bool loop_search = false;
     bool mark_deletion = false;
+    bool sub_expr_deletion = false;
 
     for (int i = 1;i < argc;++i) {
         if (argv[i] == "-h"s || argv[i] == "--help"s) {
@@ -59,6 +61,8 @@ int main(int argc, char **argv) {
             activevars = true;
         } else if (argv[i] == "-mark-deletion"s) {
             mark_deletion = true;
+        } else if (argv[i] == "-sub-expr-deletion"s){
+            sub_expr_deletion = true;
         } else {
             if (input_path.empty()) {
                 input_path = argv[i];
@@ -124,6 +128,10 @@ int main(int argc, char **argv) {
     if( mark_deletion )
     {
         PM.add_pass<MarkedCodeDeletion>(true);
+    }
+    if(sub_expr_deletion)
+    {
+        PM.add_pass<GlobalSubExprDeletion>(true);
     }
     PM.run();
     
