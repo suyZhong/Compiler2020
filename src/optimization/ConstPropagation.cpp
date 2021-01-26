@@ -172,7 +172,6 @@ BasicBlock *ConstFolder::traverseBranch(BasicBlock *bb, int depth) {
  *  ->若不是：continue
  *  ->结束后将栈里的冗余东西都删去（也可以另外再来个函数，不过感觉不方便）
  * 
- * 注意浮点数整数，用
 */
 void ConstFolder::replace_const(Function *f) {
     std::vector<Instruction *> wait_delete;

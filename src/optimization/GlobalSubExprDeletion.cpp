@@ -13,6 +13,13 @@
 //     }
 // }
 
+/*
+  * 大体想法是
+  * 1. 静态单赋值格式下，任何一个变量都不会被再次赋值，意味着所有表达式都是可用的
+  * 2. 那么单纯的把表达式丢进map里，每次有新的表达式看看有没有对应关系，有就替换
+  * 3. 只是很简单的想法，没有考虑支配者关系，无法处理if/else。
+  * 
+*/
 void GlobalSubExprDeletion::run(){
     for (auto func: m_->get_functions()){
         std::vector<Instruction *> wait_delete;
