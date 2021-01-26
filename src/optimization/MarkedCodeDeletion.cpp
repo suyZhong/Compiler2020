@@ -82,7 +82,7 @@ void MarkedCodeDeletion::markSafeFunc(Module *m) {
             }
         }
         auto funcName = func->get_name();
-        if (funcName == "output" || funcName == "outputFloat" || funcName == "neg_idx_except")
+        if (funcName == "output" || funcName == "outputFloat" || funcName == "neg_idx_except" || funcName == "input")
             safe = false;
         if (safe) {
             LOG_DEBUG << "insert safeFunc func " << func->get_name();

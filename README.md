@@ -26,3 +26,31 @@ Then synchronize changes to your forked remote repository:
 ```
 (shell) $ git push origin master
 ```
+
+----
+
+## 说明
+
+自己完成的工作为`src`文件夹中
+- `cminusfc/cminusf_builder_stu.cpp`（自动生成IR的文件）
+- `optimization/ActiveVars.cpp`（对IR活跃变量的分析）
+- `optimization/ConstPropagation.cpp`：常量传播的实现
+- `optimization/GlobalSubExprDeletion.cpp`：块间公共子表达式删除不完全的实现
+- `optimization/LoopInvHoist.cpp`：循环不变式外提的实现
+- `optimization/MarkedCodeDeletion.cpp`：标记式死代码删除的实现
+
+感谢助教提供了自己设计的，简化版llvm接口：lightIR。以及提供的各种示例程序：
+- `src/cminusfc/cminusf_builder.cpp`
+- `src/optimization/Mem2Reg.cpp`
+- `src/optimization/LoopSearch.cpp`
+- ...
+
+感谢助教团队
+- Zewen Jin
+- Ping Gong
+- Jiahao Li
+- Yiming Zhu
+- Qingyuan Chen
+- Haiquan Wang
+- Kai Ma
+- Yuxin Ma
