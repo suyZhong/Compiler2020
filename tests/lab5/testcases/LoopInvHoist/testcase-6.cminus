@@ -6,7 +6,7 @@ void main(void){
 
     i = 0;
     a = 2;
-
+    
     while(i<10000000)
     {
         j = 0;

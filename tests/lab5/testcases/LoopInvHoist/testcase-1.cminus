@@ -8,7 +8,7 @@ void main(void){
     a=20401;
     b=32303;
     c=23956;
-
+    i=0;
     while(i<100000000)
     {
         ret=a+b+c;
