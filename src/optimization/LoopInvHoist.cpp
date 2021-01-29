@@ -206,7 +206,7 @@ void LoopInvHoist::run() {
                     continue;
                 }
                 //是Binary指令：：：：
-                if (instr->isBinary()) {
+                if (instr->isBinary() || instr->is_fp2si() || instr->is_si2fp()) {
                     motionFlag = true;
                     int opNum = instr->get_num_operand();
                     for (i = 0; i < opNum; i++) {
