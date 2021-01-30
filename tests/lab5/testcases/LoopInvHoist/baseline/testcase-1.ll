@@ -22,7 +22,7 @@ label_entry:
   %op23 = fptosi float %op22 to i32
   br label %label5
 label5:                                                ; preds = %label_entry, %label10
-  %op28 = phi i32 [ %op25, %label10 ], [ undef, %label_entry ]
+  %op28 = phi i32 [ 0, %label_entry ], [ %op25, %label10 ]
   %op29 = phi i32 [ %op23, %label10 ], [ undef, %label_entry ]
   %op7 = icmp slt i32 %op28, 100000000
   %op8 = zext i1 %op7 to i32
