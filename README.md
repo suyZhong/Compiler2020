@@ -31,8 +31,8 @@ Then synchronize changes to your forked remote repository:
 
 ## 说明
 
-自己完成的工作为`src`文件夹中
-- `cminusfc/cminusf_builder_stu.cpp`（自动生成IR的文件）
+The work I've done are in `src/`
+- `cminusfc/cminusf_builder_stu.cpp`（auto gen IR）
 - `optimization/ActiveVars.cpp`（对IR活跃变量的分析）
 - `optimization/ConstPropagation.cpp`：常量传播的实现
 - `optimization/GlobalSubExprDeletion.cpp`：块间公共子表达式删除不完全的实现
@@ -54,3 +54,9 @@ Then synchronize changes to your forked remote repository:
 - Haiquan Wang
 - Kai Ma
 - Yuxin Ma
+
+## License
+
+Because the repo contains code from TAs, who have not licensed the code under an open source license, but only allowed us to public the code, the repo is only public for learning.
+
+ALL RIGHTS ARE RESERVED.
